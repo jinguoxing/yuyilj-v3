@@ -273,13 +273,37 @@ export const SemanticApi = {
         }
       ],
       unassignedFields: [
-        { id: 'f_901', name: 'temp_flag', dataType: 'CHAR(1)', reason: 'Low utility' },
-        { id: 'f_902', name: 'legacy_id', dataType: 'VARCHAR(20)', reason: 'Ambiguous mapping' },
-        { id: 'f_903', name: 'etl_batch_id', dataType: 'VARCHAR(50)', reason: 'Technical field' },
-        { id: 'f_904', name: 'unknown_col', dataType: 'VARCHAR(100)', reason: 'No semantic match' },
+        { id: 'f_901', name: 'temp_flag', dataType: 'CHAR(1)', reason: 'Low utility', group: 'TECHNICAL' },
+        { id: 'f_902', name: 'legacy_id', dataType: 'VARCHAR(20)', reason: 'Ambiguous mapping', group: 'UNASSIGNED' },
+        { id: 'f_903', name: 'etl_batch_id', dataType: 'VARCHAR(50)', reason: 'Technical field', group: 'TECHNICAL' },
+        { id: 'f_904', name: 'unknown_col', dataType: 'VARCHAR(100)', reason: 'No semantic match', group: 'UNASSIGNED' },
+        { id: 'f_905', name: 'manager_id', dataType: 'VARCHAR(20)', reason: '既可属于 Employee 又可属于 Manager', group: 'CONFLICT' },
+      ],
+      tableContext: {
+        sourceTable: 't_employee_profile',
+        businessDomain: 'HR / 员工中心',
+        totalFields: 24,
+        objectCoverage: 0.875,
+        unassignedCount: 3,
+        conflictCount: 1,
+      },
+      tableView: [
+        { field: 'employee_id', attribute: 'employeeId', object: 'Employee' },
+        { field: 'name_full', attribute: 'fullName', object: 'Employee' },
+        { field: 'corp_email', attribute: 'email', object: 'Employee' },
+        { field: 'mgr_id', attribute: 'managerId', object: 'Employee' },
+        { field: 'dept_cd', attribute: 'departmentId', object: 'DepartmentRef' },
       ],
       relationships: [
-        { source: 'Employee', target: 'DepartmentRef', type: 'BELONGS_TO', keys: 'dept_code -> department_id', evidence: 'FK Inference' }
+        { 
+          source: 'Employee', 
+          target: 'DepartmentRef', 
+          type: 'Foreign Key', 
+          keys: 'dept_code (FK) -> department_id (PK)', 
+          field: 'dept_code',
+          evidence: 'Reasoning LLM: Semantic & Pattern Match', 
+          confidence: 0.99 
+        }
       ]
     };
   },
