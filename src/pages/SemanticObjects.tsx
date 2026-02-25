@@ -6,7 +6,8 @@ import {
   MoreHorizontal, GripVertical, Plus, HelpCircle, X, Check,
   BrainCircuit, Sparkles, GitBranch, ShieldCheck,
   ChevronRight, Table, FileText, Trash2, RefreshCw,
-  ArrowLeft, Settings, Info, ExternalLink, Eye, List
+  ArrowLeft, Settings, Info, ExternalLink, Eye, List,
+  Link2, Share2, GitCommit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SemanticApi } from '@/services/semanticApi';
@@ -86,13 +87,28 @@ export default function SemanticObjects() {
   };
 
   const handleSplitObject = () => {
-    // Mock split logic: Create a new object with half the attributes
     if (!selectedObject) return;
     
     const attrs = [...selectedObject.attributes];
-    const splitPoint = Math.floor(attrs.length / 2);
-    const keepAttrs = attrs.slice(0, splitPoint);
-    const moveAttrs = attrs.slice(splitPoint);
+    let moveAttrs = [];
+    let keepAttrs = [];
+
+    if (splitStrategy === 'sensitivity') {
+      const sensitiveNames = ['annual_salary', 'ssn_number', 'bonus_amt', 'tax_bracket', 'salary', 'ssn', 'sensitive'];
+      moveAttrs = attrs.filter(a => sensitiveNames.some(n => a.name.toLowerCase().includes(n)));
+      keepAttrs = attrs.filter(a => !sensitiveNames.some(n => a.name.toLowerCase().includes(n)));
+    } else {
+      const detailNames = ['biography_text', 'previous_employment', 'education_history', 'notes', 'description', 'detail'];
+      moveAttrs = attrs.filter(a => detailNames.some(n => a.name.toLowerCase().includes(n)));
+      keepAttrs = attrs.filter(a => !detailNames.some(n => a.name.toLowerCase().includes(n)));
+    }
+
+    // Fallback if no fields matched the mock criteria
+    if (moveAttrs.length === 0) {
+      const splitPoint = Math.floor(attrs.length / 2);
+      keepAttrs = attrs.slice(0, splitPoint);
+      moveAttrs = attrs.slice(splitPoint);
+    }
 
     const updatedOriginal = {
       ...selectedObject,
@@ -141,10 +157,26 @@ export default function SemanticObjects() {
     setSelectedObject(updatedObject);
   };
 
+  const handleIgnoreField = (field: any) => {
+    setUnassignedFields(prev => prev.map(f => 
+      f.id === field.id ? { ...f, group: 'IGNORED' } : f
+    ));
+  };
+
+  const handleRestoreField = (field: any) => {
+    setUnassignedFields(prev => prev.map(f => 
+      f.id === field.id ? { ...f, group: 'UNASSIGNED' } : f
+    ));
+  };
+
   const handleMergeObject = (targetObj: any) => {
     if (!selectedObject) return;
 
-    const mergedAttrs = [...selectedObject.attributes, ...targetObj.attributes];
+    // Filter out duplicates based on mappedField
+    const existingMappedFields = new Set(selectedObject.attributes.map((a: any) => a.mappedField));
+    const newAttrs = targetObj.attributes.filter((a: any) => !existingMappedFields.has(a.mappedField));
+
+    const mergedAttrs = [...selectedObject.attributes, ...newAttrs];
     const updatedOriginal = {
       ...selectedObject,
       attributes: mergedAttrs,
@@ -167,6 +199,38 @@ export default function SemanticObjects() {
     setObjects(prev => prev.map(obj => obj.id === selectedObject.id ? updatedObject : obj));
     setSelectedObject(updatedObject);
     setIsConfigModalOpen(false);
+  };
+
+  const handleAutoOptimize = () => {
+    if (!selectedObject) return;
+    
+    // Move all UNASSIGNED fields to the selected object as ATTRIBUTE
+    const fieldsToMove = unassignedFields.filter(f => f.group === 'UNASSIGNED');
+    if (fieldsToMove.length === 0) return;
+
+    const newAttributes = fieldsToMove.map(f => ({
+      id: `attr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: f.name,
+      type: 'ATTRIBUTE',
+      mappedField: f.name,
+      evidence: 'AI 自动优化分配',
+      status: 'SUGGESTED',
+      qualityRules: []
+    }));
+
+    const updatedObject = {
+      ...selectedObject,
+      attributes: [...selectedObject.attributes, ...newAttributes],
+      fieldCount: selectedObject.fieldCount + newAttributes.length
+    };
+
+    setObjects(prev => prev.map(obj => obj.id === selectedObject.id ? updatedObject : obj));
+    setSelectedObject(updatedObject);
+    setUnassignedFields(prev => prev.filter(f => f.group !== 'UNASSIGNED'));
+  };
+
+  const handlePublish = () => {
+    navigate('/semantic/releases');
   };
 
   if (!data) return <div className="p-8 text-slate-400">Loading Objects...</div>;
@@ -215,8 +279,8 @@ export default function SemanticObjects() {
             <span className="text-[11px] text-yellow-200/80">检测到混合语义，建议拆分 1 个对象</span>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors">一键优化</button>
-            <button className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium shadow-lg shadow-indigo-900/20 transition-colors">推进到可发布</button>
+            <button onClick={handleAutoOptimize} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors">一键优化</button>
+            <button onClick={handlePublish} className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium shadow-lg shadow-indigo-900/20 transition-colors">推进到可发布</button>
           </div>
         </div>
       </header>
@@ -256,7 +320,11 @@ export default function SemanticObjects() {
           </div>
           <div className="flex items-center space-x-1.5">
             <span className="text-slate-500">冲突属性:</span>
-            <span className="font-bold text-red-400">{data.tableContext?.conflictCount || 1}</span>
+            <span className="font-bold text-red-400">{unassignedFields.filter(f => f.group === 'CONFLICT').length}</span>
+          </div>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-slate-500">已忽略:</span>
+            <span className="font-bold text-slate-400">{unassignedFields.filter(f => f.group === 'IGNORED').length}</span>
           </div>
         </div>
 
@@ -291,6 +359,7 @@ export default function SemanticObjects() {
       <main className="flex-1 overflow-hidden flex">
         {activeView === 'object' ? (
           <StructureView 
+            data={data}
             objects={objects}
             unassignedFields={unassignedFields}
             selectedObject={selectedObject} 
@@ -572,7 +641,18 @@ export default function SemanticObjects() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">质量规则 ({configuringAttribute.qualityRules?.length || 0})</label>
-                    <button className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                    <button 
+                      onClick={() => {
+                        const rule = prompt('请输入质量规则 (例如: NOT_NULL, UNIQUE, > 0):');
+                        if (rule && rule.trim()) {
+                          setConfiguringAttribute({
+                            ...configuringAttribute,
+                            qualityRules: [...(configuringAttribute.qualityRules || []), rule.trim()]
+                          });
+                        }
+                      }}
+                      className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center space-x-1"
+                    >
                       <Plus size={12} />
                       <span>添加规则</span>
                     </button>
@@ -584,7 +664,17 @@ export default function SemanticObjects() {
                           <ShieldCheck size={14} className="text-green-500" />
                           <span className="text-xs text-slate-300">{rule}</span>
                         </div>
-                        <button className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                        <button 
+                          onClick={() => {
+                            const newRules = [...(configuringAttribute.qualityRules || [])];
+                            newRules.splice(idx, 1);
+                            setConfiguringAttribute({
+                              ...configuringAttribute,
+                              qualityRules: newRules
+                            });
+                          }}
+                          className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                        >
                           <Trash2 size={12} />
                         </button>
                       </div>
@@ -616,6 +706,7 @@ export default function SemanticObjects() {
 }
 
 function StructureView({ 
+  data,
   objects, 
   unassignedFields, 
   selectedObject, 
@@ -623,6 +714,8 @@ function StructureView({
   onAssignField, 
   onMoveField, 
   onUnassignField,
+  onIgnoreField,
+  onRestoreField,
   onConfigAttribute,
   onSplit, 
   onMerge,
@@ -691,47 +784,57 @@ function StructureView({
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
-          {objects.map((obj: any) => (
-            <div
-              key={obj.id}
-              onClick={() => onSelectObject(obj)}
-              className={cn(
-                "p-3 rounded-xl border cursor-pointer transition-all group relative",
-                selectedObject?.id === obj.id
-                  ? "bg-indigo-900/20 border-indigo-500/50 shadow-sm"
-                  : "bg-slate-900/50 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50"
-              )}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center space-x-2 truncate">
-                  <Box size={14} className={cn(
-                    "shrink-0",
-                    obj.type === 'PRIMARY' ? "text-indigo-400" : 
-                    obj.type === 'REFERENCE' ? "text-blue-400" : "text-slate-500"
-                  )} />
-                  <span className={cn(
-                    "text-sm font-semibold truncate",
-                    selectedObject?.id === obj.id ? "text-indigo-200" : "text-slate-300"
-                  )}>{obj.name}</span>
-                  {obj.type === 'PRIMARY' && (
-                    <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1 rounded border border-indigo-500/30">PRIMARY</span>
+          {objects.map((obj: any) => {
+            const hasRelationships = data?.relationships?.some((r: any) => r.source === obj.name || r.target === obj.name);
+            return (
+              <div
+                key={obj.id}
+                onClick={() => onSelectObject(obj)}
+                className={cn(
+                  "p-3 rounded-xl border cursor-pointer transition-all group relative",
+                  selectedObject?.id === obj.id
+                    ? "bg-indigo-900/20 border-indigo-500/50 shadow-sm"
+                    : "bg-slate-900/50 border-slate-800 hover:border-slate-700 hover:bg-slate-800/50"
+                )}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center space-x-2 truncate">
+                    <Box size={14} className={cn(
+                      "shrink-0",
+                      obj.type === 'PRIMARY' ? "text-indigo-400" : 
+                      obj.type === 'REFERENCE' ? "text-blue-400" : 
+                      obj.type === 'LOG' ? "text-amber-400" : "text-slate-500"
+                    )} />
+                    <span className={cn(
+                      "text-sm font-semibold truncate",
+                      selectedObject?.id === obj.id ? "text-indigo-200" : "text-slate-300"
+                    )}>{obj.name}</span>
+                    {obj.type === 'PRIMARY' && (
+                      <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1 rounded border border-indigo-500/30">PRIMARY</span>
+                    )}
+                    {obj.type === 'REFERENCE' && (
+                      <span className="text-[8px] bg-blue-500/20 text-blue-400 px-1 rounded border border-blue-500/30">REF</span>
+                    )}
+                  </div>
+                  {hasRelationships && (
+                    <Network size={12} className="text-indigo-500/60 group-hover:text-indigo-400 transition-colors" />
                   )}
                 </div>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <div className="text-[10px] text-slate-500 flex items-center space-x-1">
-                  <Table size={10} />
-                  <span className="truncate max-w-[100px]">{obj.description.split(' ').pop()}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-[10px] text-slate-500">{obj.fieldCount} 属性</span>
-                  <div className="w-8 h-1 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500" style={{ width: '92%' }} />
+                <div className="flex items-center justify-between mt-2">
+                  <div className="text-[10px] text-slate-500 flex items-center space-x-1">
+                    <Table size={10} />
+                    <span className="truncate max-w-[100px]">{obj.description.split(' ').pop()}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10px] text-slate-500">{obj.fieldCount} 属性</span>
+                    <div className="w-8 h-1 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500" style={{ width: obj.type === 'PRIMARY' ? '92%' : '75%' }} />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="p-4 border-t border-slate-800">
           <button 
@@ -762,7 +865,7 @@ function StructureView({
                   </div>
                   <div className="text-[10px] text-slate-500 flex items-center space-x-1">
                     <span>来源:</span>
-                    <span className="font-mono text-indigo-400/70">t_employee_profile</span>
+                    <span className="font-mono text-indigo-400/70">{data?.tableContext?.sourceTable || 't_employee_profile'}</span>
                   </div>
                 </div>
               </div>
@@ -986,7 +1089,7 @@ function StructureView({
               <span className="text-slate-700">{unassignedFields.filter(f => f.group === 'UNASSIGNED').length}</span>
             </h4>
             {unassignedFields.filter(f => f.group === 'UNASSIGNED').map((f: any) => (
-              <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} />
+              <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} onIgnore={onIgnoreField} />
             ))}
           </div>
 
@@ -998,7 +1101,7 @@ function StructureView({
                 <span className="text-red-900/50">{unassignedFields.filter(f => f.group === 'CONFLICT').length}</span>
               </h4>
               {unassignedFields.filter(f => f.group === 'CONFLICT').map((f: any) => (
-                <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} isConflict />
+                <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} onIgnore={onIgnoreField} isConflict />
               ))}
             </div>
           )}
@@ -1010,9 +1113,22 @@ function StructureView({
               <span className="text-slate-700">{unassignedFields.filter(f => f.group === 'TECHNICAL').length}</span>
             </h4>
             {unassignedFields.filter(f => f.group === 'TECHNICAL').map((f: any) => (
-              <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} isTechnical />
+              <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} onIgnore={onIgnoreField} isTechnical />
             ))}
           </div>
+
+          {/* Ignored Section */}
+          {unassignedFields.some(f => f.group === 'IGNORED') && (
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest flex items-center justify-between">
+                <span>已忽略</span>
+                <span className="text-slate-700">{unassignedFields.filter(f => f.group === 'IGNORED').length}</span>
+              </h4>
+              {unassignedFields.filter(f => f.group === 'IGNORED').map((f: any) => (
+                <AttributeCard key={f.id} field={f} onDragStart={handleDragStart} onAssign={onAssignField} onRestore={onRestoreField} isIgnored />
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="p-4 bg-indigo-950/20 border-t border-slate-800">
@@ -1028,25 +1144,29 @@ function StructureView({
   );
 }
 
-function AttributeCard({ field, onDragStart, onAssign, isConflict, isTechnical }: any) {
+function AttributeCard({ field, onDragStart, onAssign, onIgnore, onRestore, isConflict, isTechnical, isIgnored }: any) {
   return (
     <div 
-      draggable
-      onDragStart={(e) => onDragStart(e, field, 'POOL')}
+      draggable={!isIgnored}
+      onDragStart={(e) => !isIgnored && onDragStart(e, field, 'POOL')}
       className={cn(
-        "group bg-slate-900 border border-slate-800 rounded-xl p-3 cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:shadow-lg transition-all relative overflow-hidden",
+        "group bg-slate-900 border border-slate-800 rounded-xl p-3 transition-all relative overflow-hidden",
+        !isIgnored && "cursor-grab active:cursor-grabbing hover:border-indigo-500/50 hover:shadow-lg",
         isConflict && "border-red-500/20 bg-red-500/5",
-        isTechnical && "opacity-60 grayscale hover:grayscale-0 hover:opacity-100"
+        isTechnical && "opacity-60 grayscale hover:grayscale-0 hover:opacity-100",
+        isIgnored && "opacity-40 grayscale"
       )}
     >
       <div className={cn(
-        "absolute left-0 top-0 bottom-0 w-1 bg-slate-800 group-hover:bg-indigo-500 transition-colors",
+        "absolute left-0 top-0 bottom-0 w-1 bg-slate-800 transition-colors",
+        !isIgnored && "group-hover:bg-indigo-500",
         isConflict && "bg-red-500",
-        isTechnical && "bg-slate-700"
+        isTechnical && "bg-slate-700",
+        isIgnored && "bg-slate-800"
       )}></div>
       <div className="flex justify-between items-start pl-2">
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-bold text-slate-200 font-mono mb-1 truncate">{field.name}</div>
+          <div className={cn("text-xs font-bold font-mono mb-1 truncate", isIgnored ? "text-slate-500 line-through" : "text-slate-200")}>{field.name}</div>
           <div className="flex items-center space-x-2">
             <span className="text-[9px] text-slate-500 font-mono uppercase">{field.dataType}</span>
             <div className="flex items-center space-x-1 text-[9px] text-slate-500 truncate">
@@ -1055,18 +1175,63 @@ function AttributeCard({ field, onDragStart, onAssign, isConflict, isTechnical }
             </div>
           </div>
         </div>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onAssign(field, 'ATTRIBUTE'); }}
-          className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-400 transition-colors shrink-0"
-        >
-          <Plus size={14} />
-        </button>
+        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          {isIgnored ? (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onRestore(field); }}
+              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-400 transition-colors"
+              title="恢复"
+            >
+              <RefreshCw size={14} />
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onIgnore(field); }}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+                title="忽略"
+              >
+                <X size={14} />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); onAssign(field, 'ATTRIBUTE'); }}
+                className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-400 transition-colors"
+                title="添加"
+              >
+                <Plus size={14} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function TableView({ data, activeView, setActiveView }: any) {
+function TableView({ objects, unassignedFields, data, activeView, setActiveView }: any) {
+  // Compute rows dynamically from objects and unassignedFields
+  const mappedRows = objects.flatMap((obj: any) => 
+    obj.attributes.map((attr: any) => ({
+      field: attr.mappedField,
+      attribute: attr.name,
+      object: obj.name,
+      confidence: attr.status === 'CONFIRMED' ? '100%' : '90%',
+      type: obj.type,
+      isUnassigned: false
+    }))
+  );
+
+  const unassignedRows = unassignedFields.map((field: any) => ({
+    field: field.name,
+    attribute: '-',
+    object: '未归属 (Unassigned)',
+    confidence: '-',
+    type: 'NONE',
+    isUnassigned: true
+  }));
+
+  const allRows = [...mappedRows, ...unassignedRows];
+
   return (
     <div className="flex-1 flex flex-col bg-slate-950 relative">
       <div className="h-14 border-b border-slate-800 flex items-center px-6 bg-slate-900/20 shrink-0">
@@ -1091,8 +1256,8 @@ function TableView({ data, activeView, setActiveView }: any) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50">
-                {(data.tableView || []).map((row: any, i: number) => (
-                  <tr key={i} className="hover:bg-slate-800/30 transition-colors group">
+                {allRows.map((row: any, i: number) => (
+                  <tr key={i} className={cn("hover:bg-slate-800/30 transition-colors group", row.isUnassigned && "opacity-60")}>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 font-mono text-[10px]">
@@ -1106,12 +1271,12 @@ function TableView({ data, activeView, setActiveView }: any) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        <Box size={14} className="text-indigo-400" />
-                        <span className="text-sm text-slate-300">{row.object}</span>
+                        {row.isUnassigned ? <HelpCircle size={14} className="text-slate-500" /> : <Box size={14} className="text-indigo-400" />}
+                        <span className={cn("text-sm", row.isUnassigned ? "text-slate-500 italic" : "text-slate-300")}>{row.object}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="text-xs font-mono text-green-400">99%</span>
+                      <span className={cn("text-xs font-mono", row.isUnassigned ? "text-slate-500" : "text-green-400")}>{row.confidence}</span>
                     </td>
                   </tr>
                 ))}
@@ -1128,6 +1293,26 @@ function TableView({ data, activeView, setActiveView }: any) {
 const RelationshipDrawer = ({ isOpen, onClose, data }: any) => {
   const relationships = data?.relationships || [];
   
+  const getRelIcon = (type: string) => {
+    switch (type) {
+      case 'Foreign Key': return <Link2 size={16} className="text-indigo-400" />;
+      case 'One-to-Many': return <Network size={16} className="text-blue-400" />;
+      case 'Self-Reference': return <RefreshCw size={16} className="text-amber-400" />;
+      case 'Association': return <Share2 size={16} className="text-emerald-400" />;
+      default: return <GitCommit size={16} className="text-slate-400" />;
+    }
+  };
+
+  const getRelColor = (type: string) => {
+    switch (type) {
+      case 'Foreign Key': return 'border-indigo-500/30 text-indigo-400 bg-indigo-500/5';
+      case 'One-to-Many': return 'border-blue-500/30 text-blue-400 bg-blue-500/5';
+      case 'Self-Reference': return 'border-amber-500/30 text-amber-400 bg-amber-500/5';
+      case 'Association': return 'border-emerald-500/30 text-emerald-400 bg-emerald-500/5';
+      default: return 'border-slate-500/30 text-slate-400 bg-slate-500/5';
+    }
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -1144,14 +1329,17 @@ const RelationshipDrawer = ({ isOpen, onClose, data }: any) => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute top-0 right-0 bottom-0 w-[600px] bg-slate-900 border-l border-slate-700 shadow-2xl z-50 flex flex-col"
+            className="absolute top-0 right-0 bottom-0 w-[650px] bg-slate-900 border-l border-slate-700 shadow-2xl z-50 flex flex-col"
           >
             <div className="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
               <div className="flex items-center space-x-3">
                 <div className="p-1.5 bg-indigo-500/20 rounded-lg">
                   <Network className="text-indigo-400" size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-100">对象关系可视化</h3>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-100">对象关系可视化</h3>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wider">检测到 {relationships.length} 条语义关联</div>
+                </div>
               </div>
               <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
                 <X size={20} />
@@ -1168,70 +1356,83 @@ const RelationshipDrawer = ({ isOpen, onClose, data }: any) => {
                       const targetObj = data.objects.find((o: any) => o.name === rel.target);
 
                       return (
-                        <React.Fragment key={idx}>
-                          {/* Source Node */}
-                          <div className="w-72 bg-slate-900 border-2 border-indigo-500 rounded-2xl shadow-2xl overflow-hidden group hover:scale-[1.02] transition-transform">
-                             <div className="bg-indigo-500/10 p-4 border-b border-indigo-500/20">
-                                <div className="flex justify-between items-start">
-                                   <div>
-                                      <div className="text-sm font-bold text-white">{rel.source}</div>
-                                      <div className="text-[10px] text-indigo-400 font-mono mt-0.5">{sourceObj?.type || 'OBJECT'}</div>
-                                   </div>
-                                   <Box size={18} className="text-indigo-400" />
-                                </div>
-                             </div>
-                             <div className="p-4 space-y-3">
-                                <div className="flex items-center justify-between text-[11px]">
-                                   <span className="text-slate-500">来源表:</span>
-                                   <span className="text-slate-300 font-mono truncate ml-2">{sourceObj?.description.split(' ').pop()}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px]">
-                                   <span className="text-slate-500">属性数量:</span>
-                                   <span className="text-slate-300">{sourceObj?.fieldCount}</span>
-                                </div>
-                             </div>
-                          </div>
-                          
-                          {/* Edge */}
-                          <div className="flex flex-col items-center space-y-2 relative">
-                             <div className="h-20 w-0.5 bg-gradient-to-b from-indigo-500 to-blue-500 relative">
-                                <div className="absolute top-1/2 left-4 -translate-y-1/2 bg-slate-900 border border-slate-700 rounded-xl p-3 shadow-xl min-w-[220px]">
-                                   <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">关系类型: {rel.type}</div>
-                                   <div className="text-xs text-slate-200 font-mono">{rel.keys}</div>
-                                   <div className="mt-2 flex items-center justify-between">
-                                      <span className="text-[9px] text-slate-500">置信度:</span>
-                                      <span className="text-[9px] text-green-400 font-mono">{(rel.confidence * 100).toFixed(0)}%</span>
-                                   </div>
-                                </div>
-                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2">
-                                   <ChevronRight size={16} className="text-blue-500 rotate-90" />
-                                </div>
-                             </div>
-                          </div>
+                        <div key={idx} className="w-full flex flex-col items-center">
+                          <div className="flex items-center justify-center space-x-0 w-full">
+                            {/* Source Node */}
+                            <div className="w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl overflow-hidden group hover:border-indigo-500/50 transition-all">
+                               <div className="bg-slate-800/50 p-3 border-b border-slate-800">
+                                  <div className="flex justify-between items-center">
+                                     <div className="flex items-center space-x-2">
+                                        <Box size={14} className="text-indigo-400" />
+                                        <div className="text-xs font-bold text-white truncate max-w-[140px]">{rel.source}</div>
+                                     </div>
+                                     <div className="text-[9px] px-1.5 py-0.5 rounded bg-slate-950 text-slate-500 font-mono">{sourceObj?.type || 'OBJECT'}</div>
+                                  </div>
+                               </div>
+                               <div className="p-3 space-y-2">
+                                  <div className="flex items-center justify-between text-[10px]">
+                                     <span className="text-slate-500">属性:</span>
+                                     <span className="text-slate-300">{sourceObj?.fieldCount}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px]">
+                                     <span className="text-slate-500">关联字段:</span>
+                                     <span className="text-indigo-400 font-mono">{rel.field}</span>
+                                  </div>
+                               </div>
+                            </div>
+                            
+                            {/* Edge */}
+                            <div className="flex flex-col items-center px-4 relative min-w-[120px]">
+                               <div className="h-0.5 w-full bg-gradient-to-r from-indigo-500/50 via-blue-500/50 to-slate-700 relative">
+                                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                                     <div className={cn(
+                                       "px-2 py-1 rounded-full border text-[9px] font-bold whitespace-nowrap flex items-center space-x-1 shadow-lg",
+                                       getRelColor(rel.type)
+                                     )}>
+                                       {getRelIcon(rel.type)}
+                                       <span>{rel.type}</span>
+                                     </div>
+                                  </div>
+                                  <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
+                                     <ChevronRight size={14} className="text-slate-600" />
+                                  </div>
+                               </div>
+                               <div className="mt-6 text-center">
+                                  <div className="text-[9px] text-slate-500 font-mono mb-1">{rel.keys}</div>
+                                  <div className="flex items-center justify-center space-x-1">
+                                     <span className="text-[8px] text-slate-600">置信度:</span>
+                                     <span className="text-[9px] text-green-400 font-mono">{(rel.confidence * 100).toFixed(0)}%</span>
+                                  </div>
+                               </div>
+                            </div>
 
-                          {/* Target Node */}
-                          <div className="w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl overflow-hidden hover:border-blue-500/50 transition-colors">
-                             <div className="bg-slate-800/50 p-4 border-b border-slate-800">
-                                <div className="flex justify-between items-start">
-                                   <div>
-                                      <div className="text-sm font-bold text-white">{rel.target}</div>
-                                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">{targetObj?.type || 'OBJECT'}</div>
-                                   </div>
-                                   <Layers size={18} className="text-blue-400" />
-                                </div>
-                             </div>
-                             <div className="p-4 space-y-3">
-                                <div className="flex items-center justify-between text-[11px]">
-                                   <span className="text-slate-500">来源表:</span>
-                                   <span className="text-slate-300 font-mono truncate ml-2">{targetObj?.description.split(' ').pop()}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-[11px]">
-                                   <span className="text-slate-500">属性数量:</span>
-                                   <span className="text-slate-300">{targetObj?.fieldCount}</span>
-                                </div>
-                             </div>
+                            {/* Target Node */}
+                            <div className="w-64 bg-slate-900 border border-slate-700 rounded-2xl shadow-xl overflow-hidden hover:border-blue-500/50 transition-colors">
+                               <div className="bg-slate-800/50 p-3 border-b border-slate-800">
+                                  <div className="flex justify-between items-center">
+                                     <div className="flex items-center space-x-2">
+                                        <Layers size={14} className="text-blue-400" />
+                                        <div className="text-xs font-bold text-white truncate max-w-[140px]">{rel.target}</div>
+                                     </div>
+                                     <div className="text-[9px] px-1.5 py-0.5 rounded bg-slate-950 text-slate-500 font-mono">{targetObj?.type || 'OBJECT'}</div>
+                                  </div>
+                               </div>
+                               <div className="p-3 space-y-2">
+                                  <div className="flex items-center justify-between text-[10px]">
+                                     <span className="text-slate-500">属性:</span>
+                                     <span className="text-slate-300">{targetObj?.fieldCount}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px]">
+                                     <span className="text-slate-500">关联类型:</span>
+                                     <span className="text-blue-400">{rel.type === 'Self-Reference' ? '递归' : '引用'}</span>
+                                  </div>
+                               </div>
+                            </div>
                           </div>
-                        </React.Fragment>
+                          {idx < relationships.length - 1 && (
+                            <div className="h-8 w-px bg-slate-800 my-2"></div>
+                          )}
+                        </div>
                       );
                     })
                   ) : (
@@ -1247,10 +1448,12 @@ const RelationshipDrawer = ({ isOpen, onClose, data }: any) => {
                <div className="text-[11px] text-slate-500">
                   基于 <span className="text-indigo-400 font-mono">Reasoning LLM</span> 语义关联推断
                </div>
-               <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors flex items-center space-x-2">
-                  <ExternalLink size={14} />
-                  <span>导出关系图</span>
-                </button>
+               <div className="flex items-center space-x-3">
+                 <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors flex items-center space-x-2">
+                    <ExternalLink size={14} />
+                    <span>导出关系图</span>
+                  </button>
+               </div>
             </div>
           </motion.div>
         </>

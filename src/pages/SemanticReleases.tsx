@@ -18,7 +18,7 @@ export default function SemanticReleases() {
   }, []);
 
   return (
-    <div className="h-full flex space-x-4 overflow-hidden">
+    <div className="h-full flex space-x-4 overflow-hidden p-4 lg:p-6 bg-slate-950">
       {/* Left List */}
       <div className="w-1/3 min-w-[320px] flex flex-col bg-slate-900/30 border border-slate-800 rounded-xl overflow-hidden">
         <div className="p-4 border-b border-slate-800 bg-slate-900/50">

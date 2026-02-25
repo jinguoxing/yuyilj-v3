@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Save, ArrowLeft, Database, Table, Columns, 
   AlertTriangle, CheckCircle2, Shield, Network, 
-  MoreHorizontal, Search, Plus, Code, FileJson
+  MoreHorizontal, Search, Plus, Code, FileJson,
+  BrainCircuit
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SemanticApi } from '@/services/semanticApi';
@@ -15,6 +16,8 @@ export default function SemanticWorkbench() {
   const [lvData, setLvData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'semantics' | 'lineage' | 'definition'>('semantics');
   const [selectedField, setSelectedField] = useState<any>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate fetching data
@@ -57,6 +60,13 @@ export default function SemanticWorkbench() {
             <div className="w-8 h-8 rounded-full bg-indigo-600 border-2 border-slate-900 flex items-center justify-center text-xs text-white">OU</div>
             <div className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-xs text-slate-300">+2</div>
           </div>
+          <button 
+            onClick={() => navigate(`/semantic/table-understanding/${lvData.id || lvId || 'lv_005'}`)}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors border border-slate-700"
+          >
+            <BrainCircuit size={16} className="text-indigo-400" />
+            <span>表理解</span>
+          </button>
           <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2 transition-colors">
             <Save size={16} />
             <span>保存</span>

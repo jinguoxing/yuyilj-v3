@@ -6,6 +6,7 @@ import SemanticInbox from './pages/SemanticInbox';
 import SemanticReleases from './pages/SemanticReleases';
 import SemanticWorkbench from './pages/SemanticWorkbench';
 import SemanticObjects from './pages/SemanticObjects';
+import TableUnderstanding from './pages/TableUnderstanding';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -19,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="workbench" element={<SemanticWorkbench />} />
           <Route path="workbench/:lvId" element={<SemanticWorkbench />} />
           <Route path="objects/:lvId" element={<SemanticObjects />} />
+          <Route path="table-understanding/:lvId" element={<TableUnderstanding />} />
         </Route>
       </Routes>
     </BrowserRouter>

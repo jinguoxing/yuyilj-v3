@@ -235,7 +235,7 @@ export const SemanticApi = {
           name: 'Employee',
           type: 'PRIMARY',
           description: 'Core employee entity derived from main cluster',
-          fieldCount: 12,
+          fieldCount: 15,
           attributes: [
             { id: 'attr_001', name: 'employee_id', type: 'ID', mappedField: 'emp_id', evidence: 'Primary Key Candidate (99%)', status: 'CONFIRMED', qualityRules: ['NOT_NULL', 'UNIQUE'] },
             { id: 'attr_002', name: 'full_name', type: 'ATTRIBUTE', mappedField: 'name_full', evidence: 'Semantic Name Match', status: 'CONFIRMED', qualityRules: ['NOT_NULL'] },
@@ -247,6 +247,8 @@ export const SemanticApi = {
             { id: 'attr_008', name: 'manager_id', type: 'ATTRIBUTE', mappedField: 'mgr_id', evidence: 'Self Reference', status: 'SUGGESTED', qualityRules: ['REF_INTEGRITY'] },
             { id: 'attr_009', name: 'dept_code', type: 'DIMENSION', mappedField: 'dept_cd', evidence: '外键模式', status: 'CONFIRMED', qualityRules: ['NOT_NULL'] },
             { id: 'attr_010', name: 'is_active', type: 'DIMENSION', mappedField: 'active_flg', evidence: 'Boolean', status: 'CONFIRMED', qualityRules: ['BOOLEAN'] },
+            { id: 'attr_011', name: 'work_location', type: 'DIMENSION', mappedField: 'loc_id', evidence: 'Reference Pattern', status: 'CONFIRMED', qualityRules: [] },
+            { id: 'attr_012', name: 'cost_center', type: 'ATTRIBUTE', mappedField: 'cc_code', evidence: 'Semantic Match', status: 'SUGGESTED', qualityRules: [] },
           ]
         },
         {
@@ -254,10 +256,36 @@ export const SemanticApi = {
           name: 'DepartmentRef',
           type: 'REFERENCE',
           description: 'Inferred reference object from department columns',
-          fieldCount: 3,
+          fieldCount: 4,
           attributes: [
-            { id: 'attr_011', name: 'department_id', type: 'ID', mappedField: 'dept_code', evidence: 'Foreign Key Pattern', status: 'CONFIRMED' },
-            { id: 'attr_012', name: 'department_name', type: 'ATTRIBUTE', mappedField: 'dept_name', evidence: 'Co-occurrence with dept_code', status: 'SUGGESTED' },
+            { id: 'attr_013', name: 'department_id', type: 'ID', mappedField: 'dept_code', evidence: 'Foreign Key Pattern', status: 'CONFIRMED' },
+            { id: 'attr_014', name: 'department_name', type: 'ATTRIBUTE', mappedField: 'dept_name', evidence: 'Co-occurrence with dept_code', status: 'SUGGESTED' },
+            { id: 'attr_015', name: 'dept_head_id', type: 'ATTRIBUTE', mappedField: 'dept_mgr', evidence: 'Semantic Role', status: 'SUGGESTED' },
+          ]
+        },
+        {
+          id: 'bo_004',
+          name: 'Project',
+          type: 'REFERENCE',
+          description: 'Project metadata inferred from project-related fields',
+          fieldCount: 5,
+          attributes: [
+            { id: 'attr_031', name: 'project_id', type: 'ID', mappedField: 'proj_id', evidence: 'PK Pattern', status: 'CONFIRMED' },
+            { id: 'attr_032', name: 'project_name', type: 'ATTRIBUTE', mappedField: 'proj_name', evidence: 'Semantic Match', status: 'CONFIRMED' },
+            { id: 'attr_033', name: 'budget_amt', type: 'MEASURE', mappedField: 'proj_budget', evidence: 'Numeric Currency', status: 'SUGGESTED' },
+          ]
+        },
+        {
+          id: 'bo_005',
+          name: 'Assignment',
+          type: 'PRIMARY',
+          description: 'Junction object for Employee-Project allocation',
+          fieldCount: 4,
+          attributes: [
+            { id: 'attr_041', name: 'assignment_id', type: 'ID', mappedField: 'asgn_id', evidence: 'PK Pattern', status: 'CONFIRMED' },
+            { id: 'attr_042', name: 'employee_id', type: 'ATTRIBUTE', mappedField: 'emp_id', evidence: 'FK Pattern', status: 'CONFIRMED' },
+            { id: 'attr_043', name: 'project_id', type: 'ATTRIBUTE', mappedField: 'proj_id', evidence: 'FK Pattern', status: 'CONFIRMED' },
+            { id: 'attr_044', name: 'allocation_pct', type: 'MEASURE', mappedField: 'alloc_rate', evidence: 'Percentage Pattern', status: 'SUGGESTED' },
           ]
         },
         {
@@ -265,10 +293,11 @@ export const SemanticApi = {
           name: 'AuditLog',
           type: 'LOG',
           description: 'System audit fields separated from business logic',
-          fieldCount: 2,
+          fieldCount: 3,
           attributes: [
             { id: 'attr_021', name: 'created_at', type: 'DIMENSION', mappedField: 'crt_ts', evidence: 'Audit Pattern', status: 'CONFIRMED' },
             { id: 'attr_022', name: 'created_by', type: 'ATTRIBUTE', mappedField: 'crt_user', evidence: 'Audit Pattern', status: 'CONFIRMED' },
+            { id: 'attr_023', name: 'updated_at', type: 'DIMENSION', mappedField: 'upd_ts', evidence: 'Audit Pattern', status: 'CONFIRMED' },
           ]
         }
       ],
@@ -278,13 +307,15 @@ export const SemanticApi = {
         { id: 'f_903', name: 'etl_batch_id', dataType: 'VARCHAR(50)', reason: 'Technical field', group: 'TECHNICAL' },
         { id: 'f_904', name: 'unknown_col', dataType: 'VARCHAR(100)', reason: 'No semantic match', group: 'UNASSIGNED' },
         { id: 'f_905', name: 'manager_id', dataType: 'VARCHAR(20)', reason: '既可属于 Employee 又可属于 Manager', group: 'CONFLICT' },
+        { id: 'f_906', name: 'debug_info', dataType: 'TEXT', reason: 'Internal use only', group: 'TECHNICAL' },
+        { id: 'f_907', name: 'raw_payload', dataType: 'JSON', reason: 'Unstructured data', group: 'UNASSIGNED' },
       ],
       tableContext: {
         sourceTable: 't_employee_profile',
         businessDomain: 'HR / 员工中心',
-        totalFields: 24,
-        objectCoverage: 0.875,
-        unassignedCount: 3,
+        totalFields: 32,
+        objectCoverage: 0.81,
+        unassignedCount: 4,
         conflictCount: 1,
       },
       tableView: [
@@ -293,6 +324,8 @@ export const SemanticApi = {
         { field: 'corp_email', attribute: 'email', object: 'Employee' },
         { field: 'mgr_id', attribute: 'managerId', object: 'Employee' },
         { field: 'dept_cd', attribute: 'departmentId', object: 'DepartmentRef' },
+        { field: 'proj_id', attribute: 'projectId', object: 'Project' },
+        { field: 'asgn_id', attribute: 'assignmentId', object: 'Assignment' },
       ],
       relationships: [
         { 
@@ -303,27 +336,108 @@ export const SemanticApi = {
           field: 'dept_code',
           evidence: 'Reasoning LLM: Semantic & Pattern Match', 
           confidence: 0.99 
+        },
+        { 
+          source: 'Employee', 
+          target: 'Assignment', 
+          type: 'One-to-Many', 
+          keys: 'employee_id -> employee_id', 
+          field: 'employee_id',
+          evidence: 'Primary Key to Foreign Key mapping', 
+          confidence: 0.98 
+        },
+        { 
+          source: 'Project', 
+          target: 'Assignment', 
+          type: 'One-to-Many', 
+          keys: 'project_id -> project_id', 
+          field: 'project_id',
+          evidence: 'Reference integrity detected', 
+          confidence: 0.97 
+        },
+        { 
+          source: 'Employee', 
+          target: 'AuditLog', 
+          type: 'Association', 
+          keys: 'employee_id -> created_by', 
+          field: 'employee_id',
+          evidence: 'User ID pattern match in audit fields', 
+          confidence: 0.85 
+        },
+        { 
+          source: 'Employee', 
+          target: 'Employee', 
+          type: 'Self-Reference', 
+          keys: 'manager_id -> employee_id', 
+          field: 'manager_id',
+          evidence: 'Recursive relationship detected', 
+          confidence: 0.92 
         }
       ]
     };
   },
 
-  copilotInterpret: async (text: string) => {
-    // Mock interpretation logic
-    if (text.toLowerCase().includes('plan') || text.toLowerCase().includes('understand')) {
+  copilotInterpret: async (text: string, context?: string) => {
+    // Mock interpretation logic based on context
+    if (context?.includes('/semantic/objects')) {
+      if (text.includes('分析') || text.includes('结构')) {
+        return {
+          commands: [
+            {
+              command: 'OBJECT.ANALYZE',
+              intentId: 'it_obj_001',
+              payload: { scope: { type: 'LV', lvId: 'lv_005' }, steps: ['扫描物理字段', '推断语义属性', '构建关系图谱'] },
+              uiHints: { primaryCTA: '执行分析', openRoute: '/semantic/objects/lv_005' },
+              explain: "我将为你分析当前表的语义结构，并生成对象候选和关系图谱。",
+            },
+          ],
+        };
+      }
+      if (text.includes('拆分')) {
+        return {
+          commands: [
+            {
+              command: 'OBJECT.SPLIT_SUGGESTION',
+              intentId: 'it_obj_002',
+              payload: { strategy: 'SENSITIVITY_AND_FREQUENCY', scope: { type: 'OBJECT', id: 'obj_001' } },
+              uiHints: { primaryCTA: '查看拆分建议', openRoute: '/semantic/objects/lv_005' },
+              explain: "根据分析，该对象包含核心身份信息和敏感薪资两类语义簇。拆分后可提升数据安全管控粒度，并降低下游模型理解风险。",
+            },
+          ],
+        };
+      }
+    }
+
+    if (context?.includes('/semantic/releases')) {
+      if (text.includes('预览') || text.includes('发布')) {
+         return {
+          commands: [
+            {
+              command: 'RELEASE.PREVIEW',
+              intentId: 'it_rel_001',
+              payload: { scope: { type: 'LV', lvId: 'lv_005' }, steps: ['检查质量门禁', '生成变更日志', '评估下游影响'] },
+              uiHints: { primaryCTA: '生成预览报告', openRoute: '/semantic/releases' },
+              explain: "我已经为你准备好了发布预览报告，包含质量门禁状态和变更影响评估。",
+            },
+          ],
+        };
+      }
+    }
+
+    if (text.toLowerCase().includes('plan') || text.toLowerCase().includes('understand') || text.includes('理解')) {
       return {
         commands: [
           {
             command: 'PLAN.UNDERSTAND',
             intentId: 'it_003',
             payload: { scope: { type: 'LV', lvId: 'lv_005' }, steps: ['Analyze Schema', 'Check Downstreams', 'Scan Data Profile'] },
-            uiHints: { primaryCTA: 'Run Understanding', openRoute: '/semantic/inbox' },
+            uiHints: { primaryCTA: 'Run Understanding', openRoute: '/semantic/workbench/lv_005' },
             explain: "我可以为这个逻辑视图运行一个全面的理解计划。",
           },
         ],
       };
     }
-    if (text.includes('MUST') || text.includes('must')) {
+    if (text.includes('MUST') || text.includes('must') || text.includes('阻断')) {
       return {
         commands: [
           {

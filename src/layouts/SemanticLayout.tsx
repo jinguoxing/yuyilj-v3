@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ListTodo, History, MessageSquareText, Settings, Bell, Search, User, Box } from 'lucide-react';
+import { LayoutDashboard, ListTodo, History, MessageSquareText, Settings, Bell, Search, User, Box, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GlobalCopilot from '@/components/copilot/GlobalCopilot';
 
@@ -23,6 +23,7 @@ export default function SemanticLayout() {
           <NavItem to="/semantic/inbox" icon={<ListTodo size={20} />} label="语义待办" />
           <NavItem to="/semantic/releases" icon={<History size={20} />} label="版本发布" />
           <NavItem to="/semantic/workbench" icon={<LayoutDashboard size={20} />} label="工作台" />
+          <NavItem to="/semantic/table-understanding/lv_005" icon={<BrainCircuit size={20} />} label="表理解" />
           <NavItem to="/semantic/objects/lv_005" icon={<Box size={20} />} label="对象生成" />
         </nav>
 
@@ -72,7 +73,7 @@ export default function SemanticLayout() {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-6 relative">
+        <div className="flex-1 flex flex-col min-h-0 relative">
           <Outlet />
         </div>
 

@@ -3,7 +3,7 @@ import { X, Send, Sparkles, Play, ChevronRight, Lightbulb, Loader2 } from 'lucid
 import { cn } from '@/lib/utils';
 import { SemanticApi } from '@/services/semanticApi';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface CopilotProps {
   isOpen: boolean;
@@ -17,25 +17,92 @@ interface Message {
   cards?: any[];
 }
 
-const SUGGESTIONS = [
-  "审查所有 MUST 阻断项",
-  "为 t_hr_employee 运行理解计划",
-  "显示最近的语义冲突",
-  "预览当前的发布版本"
-];
-
 export default function GlobalCopilot({ isOpen, onClose }: CopilotProps) {
   const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: '你好！我是语义治理助手。我可以帮你审查语义冲突、制定治理计划，或创建发布预览。请问有什么可以帮你？',
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const getContextualInfo = () => {
+    const path = location.pathname;
+    if (path.includes('/semantic/inbox')) {
+      return {
+        welcomeMsg: '你好！这里是语义治理待办箱。我可以帮你分析冲突、批量解决 MUST 阻断项，或者为你总结当前的治理进度。',
+        suggestions: [
+          "审查所有 MUST 阻断项",
+          "显示最近的语义冲突",
+          "帮我总结当前的待办任务"
+        ]
+      };
+    } else if (path.includes('/semantic/objects')) {
+      return {
+        welcomeMsg: '你好！这里是对象候选生成页面。我可以帮你分析表结构，建议如何拆分或合并对象，或者解释当前的语义映射关系。',
+        suggestions: [
+          "分析当前表的语义结构",
+          "为什么建议拆分这个对象？",
+          "帮我检查是否有遗漏的属性"
+        ]
+      };
+    } else if (path.includes('/semantic/workbench')) {
+      return {
+        welcomeMsg: '你好！这里是语义工作台。我可以帮你理解逻辑视图的结构，或者为你运行全面的理解计划。',
+        suggestions: [
+          "为当前视图运行理解计划",
+          "分析上游字段的变更影响",
+          "检查当前的映射逻辑"
+        ]
+      };
+    } else if (path.includes('/semantic/releases')) {
+      return {
+        welcomeMsg: '你好！这里是发布管理页面。我可以帮你预览即将发布的版本，或者对比不同版本之间的语义差异。',
+        suggestions: [
+          "预览当前的发布版本",
+          "对比上一个版本的差异",
+          "检查发布前的质量门禁"
+        ]
+      };
+    }
+    return {
+      welcomeMsg: '你好！我是语义治理助手。我可以帮你审查语义冲突、制定治理计划，或创建发布预览。请问有什么可以帮你？',
+      suggestions: [
+        "审查所有 MUST 阻断项",
+        "为 t_hr_employee 运行理解计划",
+        "显示最近的语义冲突",
+        "预览当前的发布版本"
+      ]
+    };
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      const { welcomeMsg } = getContextualInfo();
+      // Only set initial message if empty or if we want to reset on open
+      // For now, let's just ensure the first message is contextual if it's empty
+      if (messages.length === 0) {
+        setMessages([{
+          id: 'welcome',
+          role: 'assistant',
+          content: welcomeMsg,
+        }]);
+      }
+    }
+  }, [isOpen, location.pathname]);
+
+  // Update welcome message if route changes and we only have the welcome message
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].id === 'welcome') {
+       const { welcomeMsg } = getContextualInfo();
+       setMessages([{
+          id: 'welcome',
+          role: 'assistant',
+          content: welcomeMsg,
+        }]);
+    }
+  }, [location.pathname]);
+
+  const { suggestions } = getContextualInfo();
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -68,7 +135,7 @@ export default function GlobalCopilot({ isOpen, onClose }: CopilotProps) {
 
     try {
       // Call Mock API
-      const response = await SemanticApi.copilotInterpret(userMsg.content);
+      const response = await SemanticApi.copilotInterpret(userMsg.content, location.pathname);
       
       // Simulate network delay
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -218,7 +285,7 @@ export default function GlobalCopilot({ isOpen, onClose }: CopilotProps) {
               {/* Quick Suggestions */}
               {messages.length < 3 && !isTyping && (
                 <div className="px-4 pt-3 pb-1 overflow-x-auto flex space-x-2 no-scrollbar">
-                  {SUGGESTIONS.map((s, i) => (
+                  {suggestions.map((s, i) => (
                     <button
                       key={i}
                       onClick={() => handleSuggestionClick(s)}
