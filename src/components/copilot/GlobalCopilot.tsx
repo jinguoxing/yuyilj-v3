@@ -63,6 +63,15 @@ export default function GlobalCopilot({ isOpen, onClose }: CopilotProps) {
           "检查发布前的质量门禁"
         ]
       };
+    } else if (path.includes('/semantic/table-understanding')) {
+      return {
+        welcomeMsg: '你好！这里是表理解页面。我可以帮你分析表结构、主外键关系，或者解释 AI 的推理过程。',
+        suggestions: [
+          "解释 AI 为什么推荐这个表类型？",
+          "帮我检查主键的质量",
+          "这个表有哪些下游依赖？"
+        ]
+      };
     }
     return {
       welcomeMsg: '你好！我是语义治理助手。我可以帮你审查语义冲突、制定治理计划，或创建发布预览。请问有什么可以帮你？',
@@ -92,8 +101,15 @@ export default function GlobalCopilot({ isOpen, onClose }: CopilotProps) {
 
   // Update welcome message if route changes and we only have the welcome message
   useEffect(() => {
-    if (messages.length === 1 && messages[0].id === 'welcome') {
-       const { welcomeMsg } = getContextualInfo();
+    const { welcomeMsg } = getContextualInfo();
+    if (location.pathname.includes('/semantic/table-understanding')) {
+      // Always reset chat history for table understanding page to only show relevant context
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        content: welcomeMsg,
+      }]);
+    } else if (messages.length === 1 && messages[0].id === 'welcome') {
        setMessages([{
           id: 'welcome',
           role: 'assistant',

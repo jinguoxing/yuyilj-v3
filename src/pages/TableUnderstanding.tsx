@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
 import { 
   ChevronRight, AlertCircle, CheckCircle2, AlertTriangle, 
   Activity, ShieldCheck, Key, Link as LinkIcon, 
   BarChart3, Settings, RefreshCw, Save, History,
   MessageSquare, Eye, UploadCloud, Sparkles,
-  ChevronUp, ChevronDown, GitCommit, ArrowRight
+  ChevronUp, ChevronDown, GitCommit, ArrowRight, Edit2, Check
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -74,9 +74,20 @@ const MOCK_STRATEGY = {
 export default function TableUnderstanding() {
   const { lvId } = useParams();
   const navigate = useNavigate();
+  const { setIsCopilotOpen } = useOutletContext<any>();
   const [isSaving, setIsSaving] = useState(false);
   const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState<'preview' | 'audit'>('preview');
+
+  // Editable fields state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tableName, setTableName] = useState('员工维度表');
+  
+  const [isEditingGrain, setIsEditingGrain] = useState(false);
+  const [grain, setGrain] = useState(MOCK_STRATEGY.summary.grain);
+  
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [description, setDescription] = useState(MOCK_STRATEGY.summary.description);
 
   const handleConfirm = () => {
     setIsSaving(true);
@@ -134,7 +145,11 @@ export default function TableUnderstanding() {
             <button className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded transition-colors" title="重新分析">
               <RefreshCw size={16} />
             </button>
-            <button className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded transition-colors" title="智能助手">
+            <button 
+              onClick={() => setIsCopilotOpen(true)}
+              className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-slate-800 rounded transition-colors" 
+              title="智能助手"
+            >
               <MessageSquare size={16} />
             </button>
             <button className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5">
@@ -157,8 +172,33 @@ export default function TableUnderstanding() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2">
-                  <span>员工维度表</span>
-                  <button className="text-slate-500 hover:text-indigo-400"><Settings size={14}/></button>
+                  {isEditingName ? (
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="text" 
+                        value={tableName}
+                        onChange={(e) => setTableName(e.target.value)}
+                        className="bg-slate-950 border border-indigo-500 rounded px-2 py-1 text-sm text-slate-200 focus:outline-none w-48"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') setIsEditingName(false);
+                          if (e.key === 'Escape') setIsEditingName(false);
+                        }}
+                        onBlur={() => setIsEditingName(false)}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <span>{tableName}</span>
+                      <button 
+                        onClick={() => setIsEditingName(true)}
+                        className="text-slate-500 hover:text-indigo-400 transition-colors"
+                        title="编辑表名"
+                      >
+                        <Settings size={14}/>
+                      </button>
+                    </>
+                  )}
                 </h2>
                 <div className="flex items-center space-x-2 mt-2">
                   <span className="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded text-xs font-bold tracking-wider">
@@ -177,14 +217,84 @@ export default function TableUnderstanding() {
             </div>
             
             <div className="space-y-4">
-              <div>
-                <div className="text-xs text-slate-500 mb-1 uppercase tracking-wider font-semibold">粒度 (Grain)</div>
-                <div className="text-sm text-slate-200 bg-slate-950 p-2 rounded border border-slate-800">{MOCK_STRATEGY.summary.grain}</div>
+              <div className="group">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">粒度 (Grain)</div>
+                  {!isEditingGrain && (
+                    <button 
+                      onClick={() => setIsEditingGrain(true)}
+                      className="text-slate-500 hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Edit2 size={12} />
+                    </button>
+                  )}
+                </div>
+                {isEditingGrain ? (
+                  <div className="flex items-start space-x-2">
+                    <textarea 
+                      value={grain}
+                      onChange={(e) => setGrain(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-indigo-500 rounded p-2 text-sm text-slate-200 focus:outline-none resize-none h-16"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          setIsEditingGrain(false);
+                        }
+                        if (e.key === 'Escape') setIsEditingGrain(false);
+                      }}
+                      onBlur={() => setIsEditingGrain(false)}
+                    />
+                  </div>
+                ) : (
+                  <div 
+                    className="text-sm text-slate-200 bg-slate-950 p-2 rounded border border-slate-800 cursor-pointer hover:border-slate-700 transition-colors"
+                    onClick={() => setIsEditingGrain(true)}
+                  >
+                    {grain}
+                  </div>
+                )}
               </div>
-              <div>
-                <div className="text-xs text-slate-500 mb-1 uppercase tracking-wider font-semibold">业务描述</div>
-                <div className="text-sm text-slate-300 leading-relaxed">{MOCK_STRATEGY.summary.description}</div>
+              
+              <div className="group">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">业务描述</div>
+                  {!isEditingDesc && (
+                    <button 
+                      onClick={() => setIsEditingDesc(true)}
+                      className="text-slate-500 hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Edit2 size={12} />
+                    </button>
+                  )}
+                </div>
+                {isEditingDesc ? (
+                  <div className="flex items-start space-x-2">
+                    <textarea 
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="flex-1 bg-slate-950 border border-indigo-500 rounded p-2 text-sm text-slate-200 focus:outline-none resize-none h-20"
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          setIsEditingDesc(false);
+                        }
+                        if (e.key === 'Escape') setIsEditingDesc(false);
+                      }}
+                      onBlur={() => setIsEditingDesc(false)}
+                    />
+                  </div>
+                ) : (
+                  <div 
+                    className="text-sm text-slate-300 leading-relaxed cursor-pointer hover:text-slate-200 transition-colors"
+                    onClick={() => setIsEditingDesc(true)}
+                  >
+                    {description}
+                  </div>
+                )}
               </div>
+              
               <div className="bg-indigo-950/30 border border-indigo-500/20 rounded-lg p-3">
                 <div className="flex items-center space-x-2 mb-1">
                   <Sparkles size={14} className="text-indigo-400" />

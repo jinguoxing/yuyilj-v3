@@ -408,6 +408,58 @@ export const SemanticApi = {
       }
     }
 
+    if (context?.includes('/semantic/table-understanding')) {
+      if (text.includes('类型') || text.includes('推荐')) {
+        return {
+          commands: [
+            {
+              command: 'TABLE.EXPLAIN_TYPE',
+              intentId: 'it_tu_001',
+              payload: { tableType: 'DIMENSION' },
+              uiHints: { primaryCTA: '查看详细推理', openRoute: '/semantic/table-understanding/lv_005' },
+              explain: "AI 推荐该表为维度表（DIMENSION），因为该表包含大量描述性属性（如姓名、部门、职级），且被多个事实表（如考勤、发薪）作为外键引用，符合典型维度表特征。",
+            },
+          ],
+        };
+      }
+      if (text.includes('主键') || text.includes('质量')) {
+        return {
+          commands: [
+            {
+              command: 'TABLE.CHECK_PK',
+              intentId: 'it_tu_002',
+              payload: { pk: 'employee_id' },
+              uiHints: { primaryCTA: '查看主键分析', openRoute: '/semantic/table-understanding/lv_005' },
+              explain: "当前推荐的主键为 employee_id。经过分析，该字段 100% 唯一，无空值，且存在物理主键约束，质量极高。另一个候选键 ssn_number 存在少量空值，不建议作为物理主键。",
+            },
+          ],
+        };
+      }
+      if (text.includes('下游') || text.includes('依赖')) {
+        return {
+          commands: [
+            {
+              command: 'TABLE.DOWNSTREAM',
+              intentId: 'it_tu_003',
+              payload: { downstreams: 24 },
+              uiHints: { primaryCTA: '查看血缘关系', openRoute: '/semantic/table-understanding/lv_005' },
+              explain: "该表作为核心维度表，共有 24 个下游依赖。常用于按 department_id 分组聚合，常与 fact_payroll 进行 JOIN。其主键和部门外键的变更将直接影响下游 12 个核心报表的数据准确性。",
+            },
+          ],
+        };
+      }
+      return {
+        commands: [
+          {
+            command: 'TABLE.GENERAL',
+            intentId: 'it_tu_004',
+            payload: {},
+            explain: "这里是表理解页面，你可以向我询问关于表类型推荐、主外键质量分析、下游依赖影响等问题。",
+          },
+        ],
+      };
+    }
+
     if (context?.includes('/semantic/releases')) {
       if (text.includes('预览') || text.includes('发布')) {
          return {

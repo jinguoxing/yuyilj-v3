@@ -74,7 +74,7 @@ export default function SemanticLayout() {
 
         {/* Page Content */}
         <div className="flex-1 flex flex-col min-h-0 relative">
-          <Outlet />
+          <Outlet context={{ setIsCopilotOpen }} />
         </div>
 
         {/* Global Copilot Overlay */}
