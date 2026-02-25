@@ -25,6 +25,8 @@ export default function SemanticObjects() {
   // Modal States
   const [isSplitModalOpen, setIsSplitModalOpen] = useState(false);
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [configuringAttribute, setConfiguringAttribute] = useState<any>(null);
   const [splitStrategy, setSplitStrategy] = useState<'sensitivity' | 'frequency'>('sensitivity');
 
   useEffect(() => {
@@ -114,6 +116,31 @@ export default function SemanticObjects() {
     setIsSplitModalOpen(false);
   };
 
+  const handleUnassignField = (attribute: any) => {
+    if (!selectedObject) return;
+
+    // Remove from selected object
+    const updatedAttributes = selectedObject.attributes.filter((attr: any) => attr.id !== attribute.id);
+    const updatedObject = {
+      ...selectedObject,
+      attributes: updatedAttributes,
+      fieldCount: selectedObject.fieldCount - 1
+    };
+
+    // Add back to unassigned fields
+    const newField = {
+      id: attribute.id,
+      name: attribute.mappedField || attribute.name,
+      dataType: 'STRING',
+      reason: '人工移除归属',
+      group: 'UNASSIGNED'
+    };
+
+    setUnassignedFields(prev => [...prev, newField]);
+    setObjects(prev => prev.map(obj => obj.id === selectedObject.id ? updatedObject : obj));
+    setSelectedObject(updatedObject);
+  };
+
   const handleMergeObject = (targetObj: any) => {
     if (!selectedObject) return;
 
@@ -129,6 +156,17 @@ export default function SemanticObjects() {
     setObjects(prev => prev.filter(o => o.id !== targetObj.id).map(o => o.id === selectedObject.id ? updatedOriginal : o));
     setSelectedObject(updatedOriginal);
     setIsMergeModalOpen(false);
+  };
+
+  const handleUpdateAttribute = (updatedAttr: any) => {
+    if (!selectedObject) return;
+    const updatedAttributes = selectedObject.attributes.map((attr: any) => 
+      attr.id === updatedAttr.id ? updatedAttr : attr
+    );
+    const updatedObject = { ...selectedObject, attributes: updatedAttributes };
+    setObjects(prev => prev.map(obj => obj.id === selectedObject.id ? updatedObject : obj));
+    setSelectedObject(updatedObject);
+    setIsConfigModalOpen(false);
   };
 
   if (!data) return <div className="p-8 text-slate-400">Loading Objects...</div>;
@@ -221,6 +259,32 @@ export default function SemanticObjects() {
             <span className="font-bold text-red-400">{data.tableContext?.conflictCount || 1}</span>
           </div>
         </div>
+
+        <div className="flex-1" />
+
+        {/* View Mode Switcher - Moved here */}
+        <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800 shadow-sm mr-2">
+          <button
+            onClick={() => setActiveView('object')}
+            className={cn(
+              "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
+              activeView === 'object' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
+            )}
+          >
+            <Layout size={12} />
+            <span>对象视图</span>
+          </button>
+          <button
+            onClick={() => setActiveView('table')}
+            className={cn(
+              "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
+              activeView === 'table' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
+            )}
+          >
+            <Table size={12} />
+            <span>表视图</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Content */}
@@ -233,6 +297,8 @@ export default function SemanticObjects() {
             onSelectObject={setSelectedObject}
             onAssignField={handleAssignField}
             onMoveField={handleMoveField}
+            onUnassignField={handleUnassignField}
+            onConfigAttribute={(attr: any) => { setConfiguringAttribute(attr); setIsConfigModalOpen(true); }}
             onSplit={() => setIsSplitModalOpen(true)}
             onMerge={() => setIsMergeModalOpen(true)}
             activeView={activeView}
@@ -448,6 +514,103 @@ export default function SemanticObjects() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Attribute Config Modal */}
+      <AnimatePresence>
+        {isConfigModalOpen && configuringAttribute && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900 border border-slate-700 rounded-xl w-[500px] shadow-2xl overflow-hidden"
+            >
+              <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <div className="flex items-center space-x-2">
+                  <Settings className="text-indigo-400" size={20} />
+                  <h3 className="text-lg font-semibold text-slate-200">属性配置</h3>
+                </div>
+                <button onClick={() => setIsConfigModalOpen(false)} className="text-slate-400 hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">属性名称</label>
+                  <input 
+                    type="text" 
+                    defaultValue={configuringAttribute.name}
+                    onChange={(e) => setConfiguringAttribute({ ...configuringAttribute, name: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">语义类型</label>
+                    <select 
+                      defaultValue={configuringAttribute.type}
+                      onChange={(e) => setConfiguringAttribute({ ...configuringAttribute, type: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-colors appearance-none"
+                    >
+                      <option value="ID">主标识 (ID)</option>
+                      <option value="ATTRIBUTE">业务属性 (Attribute)</option>
+                      <option value="DIMENSION">维度 (Dimension)</option>
+                      <option value="MEASURE">度量 (Measure)</option>
+                      <option value="AUDIT">审计属性 (Audit)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">物理映射</label>
+                    <div className="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-sm text-slate-500 font-mono">
+                      {configuringAttribute.mappedField}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">质量规则 ({configuringAttribute.qualityRules?.length || 0})</label>
+                    <button className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center space-x-1">
+                      <Plus size={12} />
+                      <span>添加规则</span>
+                    </button>
+                  </div>
+                  <div className="space-y-2 max-h-32 overflow-y-auto pr-1">
+                    {configuringAttribute.qualityRules?.map((rule: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-2 bg-slate-950 border border-slate-800 rounded-lg group">
+                        <div className="flex items-center space-x-2">
+                          <ShieldCheck size={14} className="text-green-500" />
+                          <span className="text-xs text-slate-300">{rule}</span>
+                        </div>
+                        <button className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                    {(!configuringAttribute.qualityRules || configuringAttribute.qualityRules.length === 0) && (
+                      <div className="text-center py-4 border border-dashed border-slate-800 rounded-lg text-[11px] text-slate-600 italic">
+                        暂无质量规则
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-slate-800 flex justify-end space-x-3 bg-slate-900/50">
+                <button onClick={() => setIsConfigModalOpen(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">取消</button>
+                <button 
+                  onClick={() => handleUpdateAttribute(configuringAttribute)}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium shadow-lg shadow-indigo-900/20"
+                >
+                  保存配置
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -459,6 +622,8 @@ function StructureView({
   onSelectObject, 
   onAssignField, 
   onMoveField, 
+  onUnassignField,
+  onConfigAttribute,
   onSplit, 
   onMerge,
   activeView,
@@ -467,14 +632,17 @@ function StructureView({
 }: any) {
   const [draggedField, setDraggedField] = useState<any>(null);
   const [dragOverGroup, setDragOverGroup] = useState<string | null>(null);
+  const [isDraggingToPool, setIsDraggingToPool] = useState(false);
 
   const handleDragStart = (e: React.DragEvent, field: any, source: 'POOL' | 'STRUCTURE') => {
     setDraggedField({ ...field, source });
     e.dataTransfer.effectAllowed = 'move';
+    // Create a ghost image or just let default happen
   };
 
   const handleDragOver = (e: React.DragEvent, groupType: string) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
     setDragOverGroup(groupType);
   };
 
@@ -492,6 +660,22 @@ function StructureView({
       } else if (draggedField.source === 'STRUCTURE') {
         onMoveField(draggedField, groupType);
       }
+      setDraggedField(null);
+    }
+  };
+
+  const handlePoolDragOver = (e: React.DragEvent) => {
+    if (draggedField?.source === 'STRUCTURE') {
+      e.preventDefault();
+      setIsDraggingToPool(true);
+    }
+  };
+
+  const handlePoolDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDraggingToPool(false);
+    if (draggedField?.source === 'STRUCTURE') {
+      onUnassignField(draggedField);
       setDraggedField(null);
     }
   };
@@ -562,30 +746,6 @@ function StructureView({
 
       {/* 2. Object Structure Panel (Core) */}
       <div className="flex-1 flex flex-col bg-slate-950 min-w-0 border-r border-slate-800 relative">
-        {/* View Mode Switcher */}
-        <div className="absolute top-4 right-6 z-10 flex bg-slate-900 p-1 rounded-lg border border-slate-800 shadow-xl">
-          <button
-            onClick={() => setActiveView('object')}
-            className={cn(
-              "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
-              activeView === 'object' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-            )}
-          >
-            <Layout size={12} />
-            <span>对象视图</span>
-          </button>
-          <button
-            onClick={() => setActiveView('table')}
-            className={cn(
-              "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
-              activeView === 'table' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-            )}
-          >
-            <Table size={12} />
-            <span>表视图</span>
-          </button>
-        </div>
-
         {selectedObject ? (
           <>
             <div className="h-14 border-b border-slate-800 flex items-center justify-between px-6 bg-slate-900/20 shrink-0">
@@ -672,15 +832,18 @@ function StructureView({
                 ].map(section => {
                   const attrs = selectedObject.attributes.filter((a: any) => a.type === section.id);
                   const isOver = dragOverGroup === section.id;
+                  const isDragging = !!draggedField;
                   
-                  if (attrs.length === 0 && section.id === 'CONFLICT') return null;
+                  // Only hide CONFLICT if empty AND not dragging
+                  if (attrs.length === 0 && section.id === 'CONFLICT' && !isDragging) return null;
 
                   return (
                     <div 
                       key={section.id} 
                       className={cn(
                         "space-y-4 p-4 rounded-2xl border-2 border-transparent transition-all",
-                        isOver ? "border-indigo-500/50 bg-indigo-900/10" : "hover:bg-slate-900/20"
+                        isOver ? "border-indigo-500/50 bg-indigo-900/10" : "hover:bg-slate-900/20",
+                        isDragging && !isOver && "border-dashed border-slate-800/50"
                       )}
                       onDragOver={(e) => handleDragOver(e, section.id)}
                       onDragLeave={handleDragLeave}
@@ -694,13 +857,17 @@ function StructureView({
                         </h4>
                       </div>
                       
-                      <div className="grid grid-cols-1 gap-3">
+                      <div className="grid grid-cols-1 gap-3 min-h-[40px]">
                         {attrs.map((attr: any) => (
                           <div 
                             key={attr.id} 
                             draggable
                             onDragStart={(e) => handleDragStart(e, attr, 'STRUCTURE')}
-                            className="group flex items-center bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-indigo-500/40 hover:bg-slate-900 transition-all cursor-grab active:cursor-grabbing shadow-sm"
+                            onDragEnd={() => setDraggedField(null)}
+                            className={cn(
+                              "group flex items-center bg-slate-900/80 border border-slate-800 rounded-xl p-3 hover:border-indigo-500/40 hover:bg-slate-900 transition-all cursor-grab active:cursor-grabbing shadow-sm",
+                              draggedField?.id === attr.id && "opacity-40 grayscale"
+                            )}
                           >
                             <div className="mr-3 text-slate-700 group-hover:text-slate-500 transition-colors">
                               <GripVertical size={14} />
@@ -746,7 +913,10 @@ function StructureView({
                                   {attr.status === 'CONFIRMED' ? <Check size={8} /> : <RefreshCw size={8} />}
                                   <span>{attr.status === 'CONFIRMED' ? '已确认' : '建议'}</span>
                                 </div>
-                                <button className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button 
+                                  onClick={() => onConfigAttribute(attr)}
+                                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
                                   <Settings size={14} />
                                 </button>
                               </div>
@@ -779,7 +949,15 @@ function StructureView({
       </div>
 
       {/* 3. Attribute Pool Panel */}
-      <div className="w-80 border-l border-slate-800 bg-slate-900/30 flex flex-col shrink-0">
+      <div 
+        className={cn(
+          "w-80 border-l border-slate-800 bg-slate-900/30 flex flex-col shrink-0 transition-all",
+          isDraggingToPool ? "bg-indigo-900/20 border-l-indigo-500/50" : ""
+        )}
+        onDragOver={handlePoolDragOver}
+        onDragLeave={() => setIsDraggingToPool(false)}
+        onDrop={handlePoolDrop}
+      >
         <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
           <div className="flex items-center space-x-2">
             <HelpCircle size={16} className="text-slate-400" />
@@ -791,6 +969,16 @@ function StructureView({
         </div>
         
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {isDraggingToPool && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="h-32 border-2 border-dashed border-indigo-500/50 rounded-2xl flex flex-col items-center justify-center text-indigo-400 bg-indigo-500/5"
+            >
+              <Trash2 size={24} className="mb-2" />
+              <span className="text-xs font-bold">释放以移除归属</span>
+            </motion.div>
+          )}
           {/* Unassigned Section */}
           <div className="space-y-3">
             <h4 className="text-[10px] font-bold text-slate-600 uppercase tracking-widest flex items-center justify-between">
@@ -881,29 +1069,6 @@ function AttributeCard({ field, onDragStart, onAssign, isConflict, isTechnical }
 function TableView({ data, activeView, setActiveView }: any) {
   return (
     <div className="flex-1 flex flex-col bg-slate-950 relative">
-      <div className="absolute top-4 right-6 z-10 flex bg-slate-900 p-1 rounded-lg border border-slate-800 shadow-xl">
-        <button
-          onClick={() => setActiveView('object')}
-          className={cn(
-            "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
-            activeView === 'object' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-          )}
-        >
-          <Layout size={12} />
-          <span>对象视图</span>
-        </button>
-        <button
-          onClick={() => setActiveView('table')}
-          className={cn(
-            "px-3 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-all",
-            activeView === 'table' ? "bg-indigo-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200"
-          )}
-        >
-          <Table size={12} />
-          <span>表视图</span>
-        </button>
-      </div>
-
       <div className="h-14 border-b border-slate-800 flex items-center px-6 bg-slate-900/20 shrink-0">
         <div className="flex items-center space-x-3">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg border border-indigo-500/20">
