@@ -377,6 +377,8 @@ export default function SemanticObjects() {
         ) : (
           <TableView 
             data={data} 
+            objects={objects}
+            unassignedFields={unassignedFields}
             activeView={activeView}
             setActiveView={setActiveView}
           />

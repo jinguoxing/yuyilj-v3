@@ -5,9 +5,11 @@ import {
   Activity, ShieldCheck, Key, Link as LinkIcon, 
   BarChart3, Settings, RefreshCw, Save, History,
   MessageSquare, Eye, UploadCloud, Sparkles,
-  ChevronUp, ChevronDown, GitCommit, ArrowRight, Edit2, Check
+  ChevronUp, ChevronDown, GitCommit, ArrowRight, Edit2, Check,
+  Network, Database, ArrowLeftRight, Table
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'motion/react';
 
 const MOCK_CONTEXT = {
   lvId: 'lv_005',
@@ -27,12 +29,12 @@ const MOCK_STRATEGY = {
   },
   structure: {
     pkCandidates: [
-      { fields: ['employee_id'], confidence: 0.99, evidence: '100% Unique, Non-Null, PK Constraint', validator: 'PASS' },
-      { fields: ['ssn_number'], confidence: 0.85, evidence: '99.9% Unique, Has Nulls', validator: 'WARN', reason: '存在空值，不建议作为物理主键' }
+      { fields: ['employee_id'], confidence: 0.99, evidence: '100% Unique, Non-Null, PK Constraint', validator: 'PASS', details: { unique: true, nonNull: true, constraint: true } },
+      { fields: ['ssn_number'], confidence: 0.85, evidence: '99.9% Unique, Has Nulls', validator: 'WARN', reason: '存在空值，不建议作为物理主键', details: { unique: false, nonNull: false, constraint: false } }
     ],
     fkCandidates: [
-      { field: 'department_id', target: 'dim_department', matchScore: 0.95, evidence: 'Join frequency high, name match' },
-      { field: 'manager_id', target: 't_hr_employee', matchScore: 0.88, evidence: 'Self-referencing hierarchy' }
+      { field: 'department_id', target: 'dim_department', matchScore: 0.95, evidence: 'Join frequency high, name match', validation: { exists: true, typeMatch: true } },
+      { field: 'manager_id', target: 't_hr_employee', matchScore: 0.88, evidence: 'Self-referencing hierarchy', validation: { exists: true, typeMatch: true } }
     ]
   },
   composition: {
@@ -78,6 +80,7 @@ export default function TableUnderstanding() {
   const [isSaving, setIsSaving] = useState(false);
   const [isBottomPanelOpen, setIsBottomPanelOpen] = useState(false);
   const [activeBottomTab, setActiveBottomTab] = useState<'preview' | 'audit'>('preview');
+  const [activeMainTab, setActiveMainTab] = useState<'semantic' | 'lineage'>('semantic');
 
   // Editable fields state
   const [isEditingName, setIsEditingName] = useState(false);
@@ -88,6 +91,30 @@ export default function TableUnderstanding() {
   
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [description, setDescription] = useState(MOCK_STRATEGY.summary.description);
+
+  const [issues, setIssues] = useState(MOCK_STRATEGY.issues);
+  const [resolvedIssues, setResolvedIssues] = useState<string[]>([]);
+
+  const handleFixIssue = (id: string, type: 'must' | 'review') => {
+    setResolvedIssues(prev => [...prev, id]);
+    setTimeout(() => {
+      setIssues(prev => ({
+        ...prev,
+        [type]: prev[type].filter(i => i.id !== id)
+      }));
+    }, 500);
+  };
+
+  const handleBatchFix = () => {
+    const mustIds = issues.must.map(i => i.id);
+    setResolvedIssues(prev => [...prev, ...mustIds]);
+    setTimeout(() => {
+      setIssues(prev => ({
+        ...prev,
+        must: []
+      }));
+    }, 500);
+  };
 
   const handleConfirm = () => {
     setIsSaving(true);
@@ -166,9 +193,45 @@ export default function TableUnderstanding() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Left Canvas */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-950">
-          {/* A. AI Table Summary Card */}
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div className="flex-1 overflow-y-auto p-6 bg-slate-950 flex flex-col">
+          {/* Tabs */}
+          <div className="flex items-center space-x-6 border-b border-slate-800 mb-6 shrink-0">
+            <button 
+              onClick={() => setActiveMainTab('semantic')}
+              className={cn(
+                "pb-3 text-sm font-medium transition-colors relative",
+                activeMainTab === 'semantic' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+              )}
+            >
+              <div className="flex items-center space-x-2">
+                <Sparkles size={16} />
+                <span>语义分析</span>
+              </div>
+              {activeMainTab === 'semantic' && (
+                <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+              )}
+            </button>
+            <button 
+              onClick={() => setActiveMainTab('lineage')}
+              className={cn(
+                "pb-3 text-sm font-medium transition-colors relative",
+                activeMainTab === 'lineage' ? "text-indigo-400" : "text-slate-400 hover:text-slate-200"
+              )}
+            >
+              <div className="flex items-center space-x-2">
+                <Network size={16} />
+                <span>血缘关系</span>
+              </div>
+              {activeMainTab === 'lineage' && (
+                <motion.div layoutId="mainTabIndicator" className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500" />
+              )}
+            </button>
+          </div>
+
+          {activeMainTab === 'semantic' ? (
+            <div className="space-y-6">
+              {/* A. AI Table Summary Card */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-100 flex items-center space-x-2">
@@ -315,36 +378,78 @@ export default function TableUnderstanding() {
             <div className="grid grid-cols-2 gap-6">
               {/* PK */}
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">主键候选 (Primary Key)</div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>主键候选 (Primary Key)</span>
+                  <span className="text-[10px] text-slate-600 font-normal">AI 验证规则</span>
+                </div>
                 {MOCK_STRATEGY.structure.pkCandidates.map((pk, i) => (
-                  <div key={i} className={cn("p-3 rounded-lg border", pk.validator === 'PASS' ? "bg-slate-950 border-green-500/30" : "bg-slate-950 border-yellow-500/30")}>
-                    <div className="flex justify-between items-start mb-2">
+                  <div key={i} className={cn("p-4 rounded-xl border transition-all duration-300 hover:shadow-md", pk.validator === 'PASS' ? "bg-slate-900 border-green-500/30 hover:border-green-500/50" : "bg-slate-900 border-yellow-500/30 hover:border-yellow-500/50")}>
+                    <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center space-x-2">
-                        <span className="font-mono text-sm text-slate-200">{pk.fields.join(', ')}</span>
-                        {pk.validator === 'PASS' ? <ShieldCheck size={14} className="text-green-500" /> : <AlertTriangle size={14} className="text-yellow-500" />}
+                        <span className="font-mono text-sm font-bold text-slate-200">{pk.fields.join(', ')}</span>
+                        {pk.validator === 'PASS' ? <ShieldCheck size={16} className="text-green-500" /> : <AlertTriangle size={16} className="text-yellow-500" />}
                       </div>
-                      <span className="text-xs font-mono text-slate-400">{(pk.confidence * 100).toFixed(0)}%</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs font-mono font-bold text-indigo-400">{(pk.confidence * 100).toFixed(0)}%</span>
+                        <span className="text-[9px] text-slate-500 uppercase">置信度</span>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-500">{pk.evidence}</div>
-                    {pk.reason && <div className="text-[11px] text-yellow-500/80 mt-1">{pk.reason}</div>}
+                    
+                    {/* Validation Details */}
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <div className="flex flex-col items-center justify-center p-2 bg-slate-950 rounded border border-slate-800">
+                        {pk.details.unique ? <CheckCircle2 size={12} className="text-green-500 mb-1" /> : <AlertCircle size={12} className="text-yellow-500 mb-1" />}
+                        <span className="text-[9px] text-slate-400">唯一性</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-2 bg-slate-950 rounded border border-slate-800">
+                        {pk.details.nonNull ? <CheckCircle2 size={12} className="text-green-500 mb-1" /> : <AlertCircle size={12} className="text-yellow-500 mb-1" />}
+                        <span className="text-[9px] text-slate-400">非空</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-2 bg-slate-950 rounded border border-slate-800">
+                        {pk.details.constraint ? <CheckCircle2 size={12} className="text-green-500 mb-1" /> : <AlertCircle size={12} className="text-slate-600 mb-1" />}
+                        <span className="text-[9px] text-slate-400">物理约束</span>
+                      </div>
+                    </div>
+
+                    <div className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded border border-slate-800/50">{pk.evidence}</div>
+                    {pk.reason && <div className="text-[11px] text-yellow-500/90 mt-2 flex items-start space-x-1.5"><AlertTriangle size={12} className="mt-0.5 shrink-0" /><span>{pk.reason}</span></div>}
                   </div>
                 ))}
               </div>
 
               {/* FK */}
               <div className="space-y-3">
-                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">外键候选 (Foreign Keys)</div>
+                <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                  <span>外键候选 (Foreign Keys)</span>
+                  <span className="text-[10px] text-slate-600 font-normal">关系推断</span>
+                </div>
                 {MOCK_STRATEGY.structure.fkCandidates.map((fk, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-slate-800 bg-slate-950">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <span className="font-mono text-sm text-slate-200">{fk.field}</span>
-                      <LinkIcon size={12} className="text-slate-500" />
-                      <span className="font-mono text-sm text-indigo-400">{fk.target}</span>
+                  <div key={i} className="p-4 rounded-xl border border-slate-800 bg-slate-900 hover:border-indigo-500/30 hover:shadow-md transition-all duration-300">
+                    <div className="flex items-center space-x-2 mb-3 bg-slate-950 p-2 rounded border border-slate-800">
+                      <span className="font-mono text-sm font-bold text-slate-200">{fk.field}</span>
+                      <LinkIcon size={14} className="text-slate-500 shrink-0" />
+                      <span className="font-mono text-sm font-bold text-indigo-400 truncate" title={fk.target}>{fk.target}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <div className="text-[11px] text-slate-500">{fk.evidence}</div>
-                      <span className="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">Score: {fk.matchScore}</span>
+                    
+                    {/* Validation Details */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex space-x-3">
+                        <div className="flex items-center space-x-1">
+                          {fk.validation.exists ? <CheckCircle2 size={12} className="text-green-500" /> : <AlertCircle size={12} className="text-red-500" />}
+                          <span className="text-[10px] text-slate-400">目标表存在</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          {fk.validation.typeMatch ? <CheckCircle2 size={12} className="text-green-500" /> : <AlertCircle size={12} className="text-yellow-500" />}
+                          <span className="text-[10px] text-slate-400">类型匹配</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs font-mono font-bold text-indigo-400">{(fk.matchScore * 100).toFixed(0)}%</span>
+                        <span className="text-[9px] text-slate-500 uppercase">匹配度</span>
+                      </div>
                     </div>
+
+                    <div className="text-[11px] text-slate-400 bg-slate-950 p-2 rounded border border-slate-800/50">{fk.evidence}</div>
                   </div>
                 ))}
               </div>
@@ -429,31 +534,173 @@ export default function TableUnderstanding() {
                   <AlertCircle size={16} className="text-slate-400" />
                   <span>阻塞项与建议</span>
                 </h3>
-                <button className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition-colors">
-                  批量修复
-                </button>
+                {issues.must.length > 0 && (
+                  <button 
+                    onClick={handleBatchFix}
+                    className="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded border border-slate-700 transition-colors"
+                  >
+                    批量修复
+                  </button>
+                )}
               </div>
               <div className="space-y-3">
-              {MOCK_STRATEGY.issues.must.map(issue => (
-                <div key={issue.id} className="flex items-center justify-between p-3 bg-red-500/5 border border-red-500/20 rounded-lg">
+              {issues.must.length === 0 && issues.review.length === 0 && (
+                <div className="text-sm text-slate-500 text-center py-4">
+                  <CheckCircle2 size={24} className="mx-auto mb-2 text-green-500/50" />
+                  暂无阻塞项或建议
+                </div>
+              )}
+              {issues.must.map(issue => (
+                <div 
+                  key={issue.id} 
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border transition-all duration-500",
+                    resolvedIssues.includes(issue.id) 
+                      ? "bg-green-500/5 border-green-500/20 opacity-50 scale-95" 
+                      : "bg-red-500/5 border-red-500/20"
+                  )}
+                >
                   <div className="flex items-center space-x-3">
-                    <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 text-[9px] font-bold uppercase rounded border border-red-500/30">MUST</span>
-                    <span className="text-sm text-slate-200">{issue.title}</span>
+                    <span className={cn(
+                      "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded border",
+                      resolvedIssues.includes(issue.id)
+                        ? "bg-green-500/20 text-green-400 border-green-500/30"
+                        : "bg-red-500/20 text-red-400 border-red-500/30"
+                    )}>
+                      {resolvedIssues.includes(issue.id) ? 'FIXED' : 'MUST'}
+                    </span>
+                    <span className={cn("text-sm transition-colors", resolvedIssues.includes(issue.id) ? "text-slate-400 line-through" : "text-slate-200")}>
+                      {issue.title}
+                    </span>
                   </div>
-                  <button className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">{issue.action} &rarr;</button>
+                  {!resolvedIssues.includes(issue.id) && (
+                    <button 
+                      onClick={() => handleFixIssue(issue.id, 'must')}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                    >
+                      {issue.action} &rarr;
+                    </button>
+                  )}
                 </div>
               ))}
-              {MOCK_STRATEGY.issues.review.map(issue => (
-                <div key={issue.id} className="flex items-center justify-between p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg">
+              {issues.review.map(issue => (
+                <div 
+                  key={issue.id} 
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-lg border transition-all duration-500",
+                    resolvedIssues.includes(issue.id) 
+                      ? "bg-green-500/5 border-green-500/20 opacity-50 scale-95" 
+                      : "bg-orange-500/5 border-orange-500/20"
+                  )}
+                >
                   <div className="flex items-center space-x-3">
-                    <span className="px-1.5 py-0.5 bg-orange-500/20 text-orange-400 text-[9px] font-bold uppercase rounded border border-orange-500/30">REVIEW</span>
-                    <span className="text-sm text-slate-200">{issue.title}</span>
+                    <span className={cn(
+                      "px-1.5 py-0.5 text-[9px] font-bold uppercase rounded border",
+                      resolvedIssues.includes(issue.id)
+                        ? "bg-green-500/20 text-green-400 border-green-500/30"
+                        : "bg-orange-500/20 text-orange-400 border-orange-500/30"
+                    )}>
+                      {resolvedIssues.includes(issue.id) ? 'FIXED' : 'REVIEW'}
+                    </span>
+                    <span className={cn("text-sm transition-colors", resolvedIssues.includes(issue.id) ? "text-slate-400 line-through" : "text-slate-200")}>
+                      {issue.title}
+                    </span>
                   </div>
-                  <button className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">{issue.action} &rarr;</button>
+                  {!resolvedIssues.includes(issue.id) && (
+                    <button 
+                      onClick={() => handleFixIssue(issue.id, 'review')}
+                      className="text-xs text-indigo-400 hover:text-indigo-300 font-medium"
+                    >
+                      {issue.action} &rarr;
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+          </div>
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-slate-900 border border-slate-800 rounded-xl relative overflow-hidden">
+              {/* Simple Lineage Visualization */}
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+              
+              <div className="relative z-10 flex items-center justify-center w-full max-w-4xl">
+                {/* Upstream */}
+                <div className="flex flex-col space-y-4 w-64">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">上游依赖 (Upstream)</div>
+                  <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center space-x-3">
+                    <Database size={20} className="text-blue-400" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-200">ods_hr_employee</div>
+                      <div className="text-xs text-slate-500">ODS 层原始表</div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center space-x-3">
+                    <Database size={20} className="text-blue-400" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-200">ods_hr_department</div>
+                      <div className="text-xs text-slate-500">ODS 层原始表</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Connections */}
+                <div className="flex-1 flex items-center justify-center px-8">
+                  <div className="h-px bg-slate-700 w-full relative">
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 border-t border-r border-slate-500 rotate-45"></div>
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 px-2 text-[10px] text-slate-500 border border-slate-700 rounded-full">ETL</div>
+                  </div>
+                </div>
+
+                {/* Current Table */}
+                <div className="w-72 shrink-0">
+                  <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 text-center">当前表 (Current)</div>
+                  <div className="bg-indigo-900/40 border-2 border-indigo-500 p-5 rounded-xl shadow-[0_0_30px_rgba(99,102,241,0.2)] flex flex-col items-center">
+                    <div className="p-3 bg-indigo-500/20 rounded-full mb-3">
+                      <Table size={24} className="text-indigo-400" />
+                    </div>
+                    <div className="text-base font-bold text-slate-100 mb-1">{tableName}</div>
+                    <div className="text-xs text-indigo-300 font-mono">{MOCK_CONTEXT.qualifiedName}</div>
+                    <div className="mt-4 flex space-x-2">
+                      <span className="px-2 py-1 bg-slate-950 rounded text-[10px] text-slate-400 border border-slate-800">24 个字段</span>
+                      <span className="px-2 py-1 bg-slate-950 rounded text-[10px] text-slate-400 border border-slate-800">1.2M 行</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Connections */}
+                <div className="flex-1 flex items-center justify-center px-8">
+                  <div className="h-px bg-slate-700 w-full relative">
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 border-t border-r border-slate-500 rotate-45"></div>
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 px-2 text-[10px] text-slate-500 border border-slate-700 rounded-full">JOIN</div>
+                  </div>
+                </div>
+
+                {/* Downstream */}
+                <div className="flex flex-col space-y-4 w-64">
+                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 text-center">下游影响 (Downstream)</div>
+                  <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center space-x-3 relative overflow-hidden">
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                    <BarChart3 size={20} className="text-emerald-400" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-200">月度薪资报表</div>
+                      <div className="text-xs text-slate-500">BI Dashboard</div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center space-x-3">
+                    <BarChart3 size={20} className="text-emerald-400" />
+                    <div>
+                      <div className="text-sm font-bold text-slate-200">部门人员分布</div>
+                      <div className="text-xs text-slate-500">BI Dashboard</div>
+                    </div>
+                  </div>
+                  <div className="bg-slate-800 border border-slate-700 p-4 rounded-xl shadow-lg flex items-center space-x-3 opacity-60">
+                    <div className="text-xs text-slate-400 text-center w-full">+ 22 个其他依赖</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Confirmation Panel */}
