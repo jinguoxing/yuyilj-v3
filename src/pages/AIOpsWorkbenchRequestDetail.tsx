@@ -5,7 +5,7 @@ import {
   Settings, Search, ShieldCheck, BrainCircuit, Database, X,
   Clock, Activity, AlertTriangle, CheckCircle2, ChevronRight,
   PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Send, Bot, User, Plus,
-  RotateCcw, XCircle, ExternalLink, Download, Box, Play
+  RotateCcw, XCircle, ExternalLink, Download, Box, Play, ArrowUpCircle, Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -737,7 +737,11 @@ export default function AIOpsWorkbenchRequestDetail() {
                     <div className="flex items-center justify-between pt-3 border-t border-slate-800/50">
                       <div className="flex items-center space-x-2">
                         <button 
-                          onClick={() => openStage('D')}
+                          onClick={() => {
+                            openStage('D');
+                            setSelectedField('salary');
+                            setIsFieldDrawerOpen(true);
+                          }}
                           className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded transition-colors"
                         >
                           立即处理
@@ -1595,8 +1599,68 @@ export default function AIOpsWorkbenchRequestDetail() {
                   </div>
                 )}
                 {stageId === 'E' && (
-                  <div className="flex items-center justify-center h-32 text-slate-500">
-                    等待上游阶段完成
+                  <div className="space-y-6">
+                    {/* Summary */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                        <div className="text-sm text-slate-400 mb-1">生成指标数</div>
+                        <div className="text-2xl font-bold text-slate-200">12</div>
+                        <div className="text-xs text-emerald-400 mt-1">100% 成功</div>
+                      </div>
+                      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                        <div className="text-sm text-slate-400 mb-1">生成模型数</div>
+                        <div className="text-2xl font-bold text-slate-200">3</div>
+                        <div className="text-xs text-emerald-400 mt-1">100% 成功</div>
+                      </div>
+                    </div>
+
+                    {/* Metrics List */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                      <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                        <h4 className="text-sm font-bold text-slate-200">生成的指标 (Metrics)</h4>
+                      </div>
+                      <div className="divide-y divide-slate-800">
+                        {[
+                          { name: 'Total Revenue', type: 'SUM', field: 'amount', table: 'fact_sales' },
+                          { name: 'Active Users', type: 'COUNT_DISTINCT', field: 'user_id', table: 'fact_logins' },
+                          { name: 'Average Order Value', type: 'AVG', field: 'amount', table: 'fact_orders' }
+                        ].map((metric, idx) => (
+                          <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
+                            <div>
+                              <div className="text-sm font-bold text-slate-200">{metric.name}</div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                <span className="font-mono text-indigo-400">{metric.type}</span>({metric.field}) from {metric.table}
+                              </div>
+                            </div>
+                            <button className="text-xs text-indigo-400 hover:text-indigo-300">查看代码</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Models List */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                      <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                        <h4 className="text-sm font-bold text-slate-200">生成的模型 (Models)</h4>
+                      </div>
+                      <div className="divide-y divide-slate-800">
+                        {[
+                          { name: 'dim_users', type: 'Dimension', fields: 15 },
+                          { name: 'fact_sales', type: 'Fact', fields: 24 },
+                          { name: 'mart_daily_revenue', type: 'Data Mart', fields: 8 }
+                        ].map((model, idx) => (
+                          <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
+                            <div>
+                              <div className="text-sm font-bold text-slate-200">{model.name}</div>
+                              <div className="text-xs text-slate-500 mt-1">
+                                {model.type} • {model.fields} fields
+                              </div>
+                            </div>
+                            <button className="text-xs text-indigo-400 hover:text-indigo-300">查看模型</button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
