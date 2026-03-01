@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, Database, Search, Bot, CheckCircle2, AlertTriangle, 
-  PlayCircle, FileText, Settings, ChevronDown, CheckSquare
+  PlayCircle, FileText, Settings, ChevronDown, CheckSquare,
+  Send, Sparkles, User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,15 +11,92 @@ interface AIOpsWorkbenchRequestCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (start: boolean) => void;
+  initialTemplate?: {
+    title: string;
+    description: string;
+    category: string;
+    employee: string;
+  } | null;
 }
 
-export default function AIOpsWorkbenchRequestCreateModal({ isOpen, onClose, onCreate }: AIOpsWorkbenchRequestCreateModalProps) {
+export default function AIOpsWorkbenchRequestCreateModal({ isOpen, onClose, onCreate, initialTemplate }: AIOpsWorkbenchRequestCreateModalProps) {
   const [domain, setDomain] = useState('HR');
   const [datasource, setDatasource] = useState('hr_core_db');
   const [asset, setAsset] = useState('');
   const [useCurrentContext, setUseCurrentContext] = useState(true);
   const [requestText, setRequestText] = useState('');
   const [isEmployeeResolved, setIsEmployeeResolved] = useState(true);
+  const [chatMessages, setChatMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
+    { role: 'ai', content: '你好！我是 AI 运营助手。你可以直接告诉我你需要完成什么任务，我会帮你自动填写需求表单并分配合适的 AI 员工。' }
+  ]);
+  const [chatInput, setChatInput] = useState('');
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (isOpen && initialTemplate) {
+      setRequestText(initialTemplate.description);
+      setChatMessages(prev => [
+        ...prev,
+        { role: 'ai', content: `已为您应用模板：**${initialTemplate.title}**。需求描述已自动填充，您可以直接创建或继续修改。` }
+      ]);
+    } else if (isOpen && !initialTemplate) {
+      setRequestText('');
+      setChatMessages([
+        { role: 'ai', content: '你好！我是 AI 运营助手。你可以直接告诉我你需要完成什么任务，我会帮你自动填写需求表单并分配合适的 AI 员工。' }
+      ]);
+    }
+  }, [isOpen, initialTemplate]);
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages]);
+
+  const handleSendMessage = () => {
+    if (!chatInput.trim()) return;
+
+    const userMsg = chatInput.trim();
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setChatInput('');
+
+    // Simulate AI parsing the request and updating the form
+    setTimeout(() => {
+      let aiResponse = '我已经理解了你的需求。';
+      let newRequestText = requestText;
+
+      if (userMsg.includes('HR') || userMsg.includes('人事')) {
+        setDomain('HR');
+        setDatasource('hr_core_db');
+        aiResponse += ' 业务域已切换为 HR，数据源已切换为 hr_core_db。';
+      } else if (userMsg.includes('销售') || userMsg.includes('Sales')) {
+        setDomain('Sales');
+        setDatasource('sales_db');
+        aiResponse += ' 业务域已切换为 Sales，数据源已切换为 sales_db。';
+      }
+
+      if (userMsg.includes('血缘')) {
+        newRequestText = '梳理数据血缘关系，包括表级和字段级。';
+        aiResponse += ' 需求描述已更新为梳理数据血缘。';
+      } else if (userMsg.includes('质量') || userMsg.includes('异常')) {
+        newRequestText = '进行数据质量检测，发现异常数据。';
+        aiResponse += ' 需求描述已更新为数据质量检测。';
+      } else {
+        newRequestText = userMsg;
+        aiResponse += ' 需求描述已更新。';
+      }
+
+      setRequestText(newRequestText);
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
+    }, 1000);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -36,7 +114,7 @@ export default function AIOpsWorkbenchRequestCreateModal({ isOpen, onClose, onCr
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-3xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+          className="relative w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
         >
           {/* Header */}
           <div className="h-16 border-b border-slate-800 flex items-center justify-between px-6 shrink-0 bg-slate-900">
@@ -53,9 +131,67 @@ export default function AIOpsWorkbenchRequestCreateModal({ isOpen, onClose, onCr
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+          <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
             
-            {/* Section A: Context */}
+            {/* Left Panel: Chat Interface */}
+            <div className="w-full md:w-1/2 border-r border-slate-800 bg-slate-950/50 flex flex-col h-[60vh] md:h-auto">
+              <div className="p-4 border-b border-slate-800 bg-slate-900/30 flex items-center space-x-2 shrink-0">
+                <Sparkles size={16} className="text-indigo-400" />
+                <h3 className="text-sm font-bold text-slate-200">AI 需求助手</h3>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {chatMessages.map((msg, idx) => (
+                  <div key={idx} className={cn("flex items-start space-x-3", msg.role === 'user' ? "flex-row-reverse space-x-reverse" : "")}>
+                    <div className={cn(
+                      "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+                      msg.role === 'ai' ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" : "bg-slate-800 text-slate-300 border border-slate-700"
+                    )}>
+                      {msg.role === 'ai' ? <Bot size={16} /> : <User size={16} />}
+                    </div>
+                    <div className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+                      msg.role === 'ai' 
+                        ? "bg-slate-900 border border-slate-800 text-slate-300 rounded-tl-none" 
+                        : "bg-indigo-600 text-white rounded-tr-none shadow-md shadow-indigo-900/20"
+                    )}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+
+              <div className="p-4 border-t border-slate-800 bg-slate-900/50 shrink-0">
+                <div className="relative flex items-end">
+                  <textarea
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="告诉 AI 你的需求，例如：帮我梳理 HR 域的表血缘..."
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 resize-none min-h-[44px] max-h-[120px] custom-scrollbar"
+                    rows={1}
+                  />
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={!chatInput.trim()}
+                    className="absolute right-2 bottom-2 p-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg transition-colors"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button onClick={() => setChatInput('帮我解析 HR 域的表结构')} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-full transition-colors">解析表结构</button>
+                  <button onClick={() => setChatInput('梳理 Sales 域的数据血缘')} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-full transition-colors">梳理数据血缘</button>
+                  <button onClick={() => setChatInput('检查财务数据的质量异常')} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-full transition-colors">数据质量检测</button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Panel: Form */}
+            <div className="w-full md:w-1/2 overflow-y-auto p-6 space-y-8 custom-scrollbar bg-slate-900">
+              
+              {/* Section A: Context */}
             <section className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-slate-200 flex items-center">
@@ -212,6 +348,7 @@ export default function AIOpsWorkbenchRequestCreateModal({ isOpen, onClose, onCr
               </div>
             </section>
 
+            </div>
           </div>
 
           {/* Footer Actions */}

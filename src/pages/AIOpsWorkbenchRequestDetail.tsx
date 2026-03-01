@@ -5,7 +5,8 @@ import {
   Settings, Search, ShieldCheck, BrainCircuit, Database, X,
   Clock, Activity, AlertTriangle, CheckCircle2, ChevronRight,
   PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Send, Bot, User, Plus,
-  RotateCcw, XCircle, ExternalLink, Download, Box, Play, ArrowUpCircle, Info
+  RotateCcw, XCircle, ExternalLink, Download, Box, Play, ArrowUpCircle, Info,
+  Share2, ChevronLeft, Zap, Pause
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -89,6 +90,7 @@ export default function AIOpsWorkbenchRequestDetail() {
   
   const [isFieldDrawerOpen, setIsFieldDrawerOpen] = useState(false);
   const [selectedField, setSelectedField] = useState('');
+  const [requestStatus, setRequestStatus] = useState<'IN_PROGRESS' | 'PAUSED' | 'COMPLETED'>('IN_PROGRESS');
 
   useEffect(() => {
     if (location.pathname.includes('/stages/')) {
@@ -123,6 +125,40 @@ export default function AIOpsWorkbenchRequestDetail() {
         summary: '收到您的反馈，已调整推断策略，正在重新生成...' 
       }]);
     }, 1000);
+  };
+
+  const handleApprovePlan = () => {
+    setMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', role: 'user', content: '批准执行计划' }]);
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        type: 'progress', 
+        role: 'ai',
+        stageId: 'C',
+        stageName: '语义推断',
+        status: 'IN_PROGRESS',
+        summary: '计划已批准，正在启动语义推断阶段...' 
+      }]);
+    }, 800);
+  };
+
+  const handleModifyConfig = () => {
+    setIsRightRailOpen(true);
+    setRightTab('actions');
+    // In a real app, this might open a specific config modal
+  };
+
+  const handleIgnoreBlocker = (taskId: string) => {
+    setMessages(prev => [...prev, { id: Date.now().toString(), type: 'user', role: 'user', content: `忽略任务 ${taskId}` }]);
+    setTimeout(() => {
+      setMessages(prev => [...prev, { 
+        id: Date.now().toString(), 
+        type: 'progress', 
+        role: 'ai',
+        status: 'COMPLETED',
+        summary: `已忽略任务 ${taskId}，继续后续流程。` 
+      }]);
+    }, 800);
   };
 
   const handleResume = () => {
@@ -209,58 +245,115 @@ export default function AIOpsWorkbenchRequestDetail() {
       {/* Main Column: Chat & Plan */}
       <div className="flex-1 flex flex-col min-w-0 bg-slate-950 relative">
         {/* Header */}
-        <div className="h-14 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center px-4 shrink-0 z-10">
+        <div className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur-sm flex items-center px-6 shrink-0 z-10">
           {!isLeftRailOpen && (
             <button 
               onClick={() => setIsLeftRailOpen(true)}
-              className="p-1.5 mr-3 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-1.5 mr-4 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
             >
-              <PanelLeftOpen size={18} />
+              <PanelLeftOpen size={20} />
             </button>
           )}
-          <div className="flex items-center space-x-3">
-            <h1 className="text-base font-bold text-slate-100 truncate">{requestId}: 解析 HR 域表结构与语义</h1>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 uppercase tracking-wider shrink-0">
-              运行中
+          <div className="flex items-center space-x-4">
+            <h1 className="text-lg font-bold text-slate-100 truncate">零售业务域语义建模</h1>
+            <span className={cn(
+              "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 border",
+              requestStatus === 'IN_PROGRESS' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+              requestStatus === 'PAUSED' ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+              "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+            )}>
+              {requestStatus === 'IN_PROGRESS' ? '进行中' : requestStatus === 'PAUSED' ? '已暂停' : '已完成'}
             </span>
           </div>
           
-          <div className="ml-auto flex items-center space-x-2">
-            {!isRightRailOpen && (
+          <div className="ml-auto flex items-center space-x-3">
+            {requestStatus === 'IN_PROGRESS' && (
               <button 
-                onClick={() => setIsRightRailOpen(true)}
-                className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-                title="打开控制台"
+                onClick={() => setRequestStatus('PAUSED')}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors border border-slate-700"
               >
-                <PanelRightOpen size={18} />
+                暂停需求
               </button>
+            )}
+            {requestStatus === 'PAUSED' && (
+              <button 
+                onClick={() => setRequestStatus('IN_PROGRESS')}
+                className="px-4 py-1.5 bg-amber-600/20 hover:bg-amber-600/30 text-amber-500 text-xs font-medium rounded-lg transition-colors border border-amber-500/30 flex items-center"
+              >
+                <PlayCircle size={14} className="mr-1.5" />
+                恢复需求
+              </button>
+            )}
+            {requestStatus !== 'COMPLETED' && (
+              <button 
+                onClick={() => setRequestStatus('COMPLETED')}
+                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                完成交付
+              </button>
+            )}
+            {requestStatus === 'COMPLETED' && (
+              <div className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 text-xs font-medium rounded-lg border border-emerald-500/20 flex items-center">
+                <CheckCircle2 size={14} className="mr-1.5" />
+                已交付
+              </div>
             )}
           </div>
         </div>
 
         {/* ContextBar */}
-        <div className="px-4 py-2 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between shrink-0 overflow-x-auto custom-scrollbar">
+        <div className="px-6 py-2 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between shrink-0 overflow-x-auto custom-scrollbar">
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-1 bg-slate-800 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">业务域: HR</span>
-            <span className="px-2 py-1 bg-slate-800 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">数据库: hr_core_db</span>
-            <span className="px-2 py-1 bg-slate-800 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">资产: employees</span>
-            <div className="h-4 w-px bg-slate-700 mx-1 shrink-0" />
+            <div className="flex items-center space-x-1 px-2 py-1 bg-slate-800/50 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">
+              <Database size={12} className="text-indigo-400" />
+              <span>零售业务域</span>
+            </div>
+            <div className="flex items-center space-x-1 px-2 py-1 bg-slate-800/50 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">
+              <Database size={12} className="text-emerald-400" />
+              <span>PostgreSQL 生产库 01</span>
+            </div>
+            <div className="flex items-center space-x-1 px-2 py-1 bg-slate-800/50 text-slate-300 rounded text-xs border border-slate-700 whitespace-nowrap">
+              <FileText size={12} className="text-amber-400" />
+              <span>public.orders +3</span>
+            </div>
+            
+            <div className="h-4 w-px bg-slate-700 mx-2 shrink-0" />
+            
             <div className="flex items-center space-x-1 px-2 py-1 bg-indigo-500/10 text-indigo-300 rounded text-xs border border-indigo-500/20 whitespace-nowrap">
               <Bot size={12} className="mr-1" />
-              <span className="font-medium">Data Steward AI</span>
+              <span className="font-medium">数据语义理解 (L2)</span>
               <span className="text-[10px] bg-indigo-500/20 px-1 rounded ml-1">v1.2</span>
-              <span className="text-[10px] bg-amber-500/20 text-amber-400 px-1 rounded ml-1">L2</span>
+            </div>
+
+            <div className="flex items-center space-x-2 ml-2">
+              <button className="p-1 text-slate-500 hover:text-slate-300">
+                <Share2 size={14} />
+              </button>
+              <span className="text-[10px] text-slate-500">设置默认版本</span>
+              <button className="flex items-center space-x-1 text-[10px] text-indigo-400 hover:text-indigo-300">
+                <ExternalLink size={12} />
+                <span>查看台账</span>
+              </button>
             </div>
           </div>
-          <div className="flex items-center space-x-2 shrink-0 ml-4">
-            <button className="text-xs text-slate-400 hover:text-slate-200 px-2 py-1 rounded hover:bg-slate-800 transition-colors whitespace-nowrap">
-              设为默认版本
-            </button>
-            <button className="text-xs text-indigo-400 hover:text-indigo-300 px-2 py-1 rounded hover:bg-indigo-500/10 transition-colors flex items-center whitespace-nowrap">
-              <Database size={12} className="mr-1" />
-              查看台账
-            </button>
-          </div>
+        </div>
+
+        {/* Right Rail Toggle Handle (Pill style from image) */}
+        <div 
+          className={cn(
+            "fixed top-1/2 -translate-y-1/2 z-50 transition-all duration-300",
+            isRightRailOpen ? "right-[400px]" : "right-0"
+          )}
+        >
+          <button
+            onClick={() => setIsRightRailOpen(!isRightRailOpen)}
+            className="flex items-center justify-center w-6 h-24 bg-slate-800 border border-slate-700 rounded-l-2xl text-slate-400 hover:text-slate-200 shadow-2xl group"
+          >
+            <div className="flex flex-col items-center space-y-1">
+              {isRightRailOpen ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              <div className="w-1 h-8 bg-slate-600 rounded-full group-hover:bg-slate-500 transition-colors" />
+            </div>
+          </button>
         </div>
 
         {/* Chat Area (MessageStream) */}
@@ -286,35 +379,55 @@ export default function AIOpsWorkbenchRequestDetail() {
                 </div>
                 <div className="flex-1 space-y-2 min-w-0">
                   {msg.type === 'plan' && (
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-sm p-5 shadow-sm">
-                      <h4 className="text-sm font-bold text-slate-200 mb-4 flex items-center">
-                        <Activity size={16} className="mr-2 text-indigo-400" />
-                        执行计划 (Execution Plan)
-                      </h4>
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-sm p-5 shadow-sm max-w-md">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-sm font-bold text-slate-200 flex items-center">
+                          <Activity size={16} className="mr-2 text-indigo-400" />
+                          执行计划
+                        </h4>
+                        <div className="flex items-center space-x-1 text-[10px] text-slate-500">
+                          <Clock size={12} />
+                          <span>预计 15M</span>
+                        </div>
+                      </div>
                       <div className="space-y-3 mb-4">
                         {msg.stages?.map((stage, idx) => (
-                          <div key={stage.id} className="flex items-center space-x-3">
+                          <div 
+                            key={stage.id} 
+                            className="flex items-center space-x-3 group cursor-pointer"
+                            onClick={() => openStage(stage.id)}
+                          >
                             <div className={cn(
-                              "w-6 h-6 rounded-full flex items-center justify-center border text-xs shrink-0",
+                              "w-8 h-8 rounded-full flex items-center justify-center border text-xs shrink-0 transition-colors",
                               stage.status === 'COMPLETED' ? "bg-emerald-500/20 border-emerald-500 text-emerald-400" :
                               stage.status === 'IN_PROGRESS' ? "bg-blue-500/20 border-blue-500 text-blue-400" :
-                              "bg-slate-800 border-slate-700 text-slate-500"
+                              "bg-slate-800 border-slate-700 text-slate-500 group-hover:border-slate-500"
                             )}>
-                              {stage.status === 'COMPLETED' ? <CheckCircle2 size={12} /> : idx + 1}
+                              {stage.status === 'COMPLETED' ? <CheckCircle2 size={14} /> : idx + 1}
                             </div>
-                            <div className="flex-1 flex items-center justify-between bg-slate-950 border border-slate-800/50 rounded-lg px-3 py-2">
-                              <span className="text-sm text-slate-300">{stage.name}</span>
-                              <span className="text-[10px] font-mono text-slate-500">{stage.status}</span>
+                            <div className="flex-1 flex items-center justify-between bg-slate-950/50 border border-slate-800/50 rounded-xl px-4 py-3 hover:bg-slate-900 transition-colors">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-slate-300">{stage.name}</span>
+                                {idx === 0 && <span className="text-[10px] text-slate-500">扫描所选 4 张表的结构与元数据</span>}
+                                {idx === 1 && <span className="text-[10px] text-slate-500">分析字段分布、空值率与唯一性</span>}
+                              </div>
+                              <ChevronRight size={14} className="text-slate-600 group-hover:text-slate-400 transition-colors" />
                             </div>
                           </div>
                         ))}
                       </div>
                       <div className="flex items-center space-x-3 pt-3 border-t border-slate-800/50">
-                        <button className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded transition-colors flex items-center justify-center">
+                        <button 
+                          onClick={handleApprovePlan}
+                          className="flex-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded transition-colors flex items-center justify-center"
+                        >
                           <CheckCircle2 size={14} className="mr-1.5" />
                           批准计划
                         </button>
-                        <button className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded transition-colors border border-slate-700 flex items-center justify-center">
+                        <button 
+                          onClick={handleModifyConfig}
+                          className="flex-1 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded transition-colors border border-slate-700 flex items-center justify-center"
+                        >
                           <Settings size={14} className="mr-1.5" />
                           修改配置
                         </button>
@@ -371,18 +484,26 @@ export default function AIOpsWorkbenchRequestDetail() {
                           <span className="text-[10px] font-mono text-slate-500">{msg.taskId}</span>
                         </div>
                         <div className="text-sm text-slate-200 mb-3">{msg.summary}</div>
-                        <button 
-                          onClick={() => {
-                            setIsRightRailOpen(true);
-                            setRightTab('actions');
-                          }}
-                          className={cn(
-                            "text-xs px-3 py-1.5 rounded-lg font-medium transition-colors",
-                            msg.blockerType === 'hard' ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" : "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30"
-                          )}
-                        >
-                          去处理 (Resolve)
-                        </button>
+                        <div className="flex items-center space-x-2">
+                          <button 
+                            onClick={() => {
+                              setIsRightRailOpen(true);
+                              setRightTab('actions');
+                            }}
+                            className={cn(
+                              "text-xs px-3 py-1.5 rounded-lg font-medium transition-colors",
+                              msg.blockerType === 'hard' ? "bg-red-500/20 text-red-400 hover:bg-red-500/30" : "bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30"
+                            )}
+                          >
+                            去处理 (Resolve)
+                          </button>
+                          <button 
+                            onClick={() => handleIgnoreBlocker(msg.taskId || '')}
+                            className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-300 rounded-lg font-medium transition-colors border border-slate-700"
+                          >
+                            忽略
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -436,62 +557,85 @@ export default function AIOpsWorkbenchRequestDetail() {
         </div>
 
         {/* Composer (Input Area) */}
-        <div className="p-4 border-t border-slate-800 bg-slate-900 shrink-0">
-          <div className="max-w-4xl mx-auto flex flex-col space-y-3">
-            {/* Intent Buttons */}
-            <div className="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-1">
-              {['解析表结构', '提取血缘', '生成指标', '质量检测'].map(intent => (
+        <div className="p-6 border-t border-slate-800 bg-slate-900 shrink-0">
+          <div className="max-w-5xl mx-auto flex flex-col space-y-4">
+            {/* Quick Actions Chips */}
+            <div className="flex items-center space-x-2 overflow-x-auto custom-scrollbar pb-1 no-scrollbar">
+              {[
+                { label: '一键运行全流程 (L2)', icon: Zap },
+                { label: '只跑扫描', icon: Database },
+                { label: '只跑语义理解', icon: Bot },
+                { label: '生成候选对象', icon: FileText },
+                { label: '生成质量规则草案', icon: Settings },
+              ].map((action, idx) => (
                 <button 
-                  key={intent} 
-                  onClick={() => setInput(intent)}
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-full whitespace-nowrap transition-colors border border-slate-700"
+                  key={idx} 
+                  className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800/50 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-[11px] rounded-lg whitespace-nowrap transition-colors border border-slate-700/50"
                 >
-                  {intent}
+                  <action.icon size={12} />
+                  <span>{action.label}</span>
                 </button>
               ))}
             </div>
             
-            <div className="relative flex items-end bg-slate-950 border border-slate-700 rounded-xl overflow-hidden focus-within:border-indigo-500 transition-colors shadow-inner">
-              <textarea 
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
-                placeholder="输入指令干预执行计划，或询问当前进度..."
-                className="w-full bg-transparent border-none resize-none pl-4 pr-2 py-3 text-sm text-slate-200 focus:outline-none min-h-[44px] max-h-32 custom-scrollbar"
-                rows={1}
-              />
-              <div className="flex items-center space-x-2 p-2 shrink-0">
-                <label className="flex items-center space-x-1.5 cursor-pointer group">
-                  <div className="relative flex items-center justify-center w-6 h-6 rounded hover:bg-slate-800 transition-colors">
-                    <input type="checkbox" className="peer sr-only" defaultChecked />
-                    <div className="w-4 h-4 rounded border border-slate-500 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 flex items-center justify-center transition-colors">
-                      <CheckSquare size={12} className="text-white opacity-0 peer-checked:opacity-100" />
+            <div className="relative flex flex-col bg-slate-950 border-2 border-slate-800 rounded-2xl overflow-hidden focus-within:border-indigo-500/50 transition-colors shadow-2xl">
+              {requestStatus === 'COMPLETED' ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                  <CheckCircle2 size={24} className="mb-2 text-emerald-500/50" />
+                  <p className="text-sm">需求已交付，当前会话已结束</p>
+                </div>
+              ) : requestStatus === 'PAUSED' ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                  <Pause size={24} className="mb-2 text-amber-500/50" />
+                  <p className="text-sm">需求已暂停，点击右上角「恢复需求」继续</p>
+                </div>
+              ) : (
+                <>
+                  <textarea 
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
+                    placeholder="输入指令或提问，例如：'生成成本阶段报告'..."
+                    className="w-full bg-transparent border-none resize-none px-6 py-5 text-sm text-slate-200 focus:outline-none min-h-[100px] max-h-40 custom-scrollbar"
+                  />
+                  
+                  <div className="flex items-center justify-between px-4 pb-4">
+                    <div className="flex items-center space-x-3">
+                      <button className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-400 hover:text-slate-300 transition-colors">
+                        <Info size={14} className="text-indigo-400" />
+                        <span className="text-xs">上下文</span>
+                      </button>
+                      <div className="flex items-center space-x-4 text-[10px] text-slate-500">
+                        <span className="flex items-center"><kbd className="bg-slate-800 px-1 rounded mr-1">Enter</kbd> 发送</span>
+                        <span className="flex items-center"><kbd className="bg-slate-800 px-1 rounded mr-1">Shift + Enter</kbd> 换行</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <button 
+                        onClick={() => setRequestStatus('PAUSED')}
+                        className="flex items-center space-x-2 px-4 py-2 bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 rounded-lg border border-amber-500/30 transition-colors"
+                      >
+                        <Pause size={14} />
+                        <span className="text-xs font-bold">暂停执行</span>
+                      </button>
+                      
+                      <button 
+                        onClick={handleSendMessage}
+                        disabled={!input.trim()}
+                        className="p-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 text-white rounded-xl transition-all shadow-lg shadow-indigo-500/20"
+                      >
+                        <Send size={18} />
+                      </button>
                     </div>
                   </div>
-                  <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors select-none whitespace-nowrap">附带上下文</span>
-                </label>
-                
-                <button 
-                  onClick={handleResume}
-                  className="p-1.5 bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 rounded-lg transition-colors flex items-center space-x-1"
-                >
-                  <PlayCircle size={16} />
-                  <span className="text-xs font-medium pr-1">恢复执行</span>
-                </button>
-                
-                <button 
-                  onClick={handleSendMessage}
-                  disabled={!input.trim()}
-                  className="p-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-600/50 disabled:text-white/50 text-white rounded-lg transition-colors"
-                >
-                  <Send size={16} />
-                </button>
-              </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -506,8 +650,8 @@ export default function AIOpsWorkbenchRequestDetail() {
             exit={{ width: 0, opacity: 0 }}
             className="border-l border-slate-800 bg-slate-900/30 flex flex-col shrink-0 z-10 overflow-hidden"
           >
-            <div className="flex items-center border-b border-slate-800 shrink-0 bg-slate-900/80 backdrop-blur-sm relative">
-              <div className="flex-1 flex items-center">
+            <div className="flex items-center border-b border-slate-800 shrink-0 bg-slate-900/80 backdrop-blur-sm">
+              <div className="flex-1 flex items-center pr-10">
                 {[
                   { id: 'runs', label: '运行进度', icon: PlayCircle },
                   { id: 'actions', label: '待处理', icon: AlertTriangle },
@@ -529,13 +673,15 @@ export default function AIOpsWorkbenchRequestDetail() {
                   </button>
                 ))}
               </div>
-              <button 
-                onClick={() => setIsRightRailOpen(false)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
-                title="收起控制台"
-              >
-                <PanelRightClose size={16} />
-              </button>
+              <div className="absolute right-2">
+                <button 
+                  onClick={() => setIsRightRailOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded-lg transition-colors"
+                  title="收起控制台"
+                >
+                  <PanelRightClose size={16} />
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -590,7 +736,7 @@ export default function AIOpsWorkbenchRequestDetail() {
                 {/* Vertical Line for Stepper */}
                 <div className="absolute left-8 top-8 bottom-8 w-px bg-slate-800 z-0" />
                 
-                {STAGES.map((stage, index) => (
+                {[...STAGES].reverse().map((stage, index) => (
                   <div key={stage.id} className="relative z-10 flex items-start space-x-4">
                     {/* Stepper Node */}
                     <div className={cn(
@@ -1600,66 +1746,125 @@ export default function AIOpsWorkbenchRequestDetail() {
                 )}
                 {stageId === 'E' && (
                   <div className="space-y-6">
-                    {/* Summary */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* E.1 Summary */}
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                        <div className="text-sm text-slate-400 mb-1">生成指标数</div>
-                        <div className="text-2xl font-bold text-slate-200">12</div>
-                        <div className="text-xs text-emerald-400 mt-1">100% 成功</div>
+                        <div className="text-sm text-slate-400 mb-1">候选对象总数</div>
+                        <div className="text-2xl font-bold text-slate-200">24</div>
+                        <div className="text-xs text-slate-500 mt-1">基于当前语义生成</div>
                       </div>
                       <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
-                        <div className="text-sm text-slate-400 mb-1">生成模型数</div>
-                        <div className="text-2xl font-bold text-slate-200">3</div>
-                        <div className="text-xs text-emerald-400 mt-1">100% 成功</div>
+                        <div className="text-sm text-slate-400 mb-1">评分分布</div>
+                        <div className="flex items-end space-x-4 mt-1">
+                          <div className="flex flex-col items-center">
+                            <div className="text-lg font-bold text-emerald-400">15</div>
+                            <div className="text-[10px] text-slate-500 uppercase">高</div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-lg font-bold text-yellow-400">7</div>
+                            <div className="text-[10px] text-slate-500 uppercase">中</div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <div className="text-lg font-bold text-red-400">2</div>
+                            <div className="text-[10px] text-slate-500 uppercase">低</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
+                        <div className="text-sm text-slate-400 mb-1">合并/拆分建议</div>
+                        <div className="text-2xl font-bold text-indigo-400">5</div>
+                        <div className="text-xs text-slate-500 mt-1">待人工确认</div>
                       </div>
                     </div>
 
-                    {/* Metrics List */}
+                    {/* E.2 Candidate List */}
                     <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                       <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-slate-200">生成的指标 (Metrics)</h4>
+                        <h4 className="text-sm font-bold text-slate-200">Top 候选对象 (Candidates)</h4>
+                        <span className="text-xs text-slate-500">按综合评分排序</span>
                       </div>
                       <div className="divide-y divide-slate-800">
                         {[
-                          { name: 'Total Revenue', type: 'SUM', field: 'amount', table: 'fact_sales' },
-                          { name: 'Active Users', type: 'COUNT_DISTINCT', field: 'user_id', table: 'fact_logins' },
-                          { name: 'Average Order Value', type: 'AVG', field: 'amount', table: 'fact_orders' }
-                        ].map((metric, idx) => (
-                          <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
-                            <div>
-                              <div className="text-sm font-bold text-slate-200">{metric.name}</div>
-                              <div className="text-xs text-slate-500 mt-1">
-                                <span className="font-mono text-indigo-400">{metric.type}</span>({metric.field}) from {metric.table}
+                          { 
+                            name: 'Customer', 
+                            score: 0.92, 
+                            metrics: { identity: 0.95, cohesion: 0.88, separation: 0.90, relationship: 0.94 },
+                            suggestion: null
+                          },
+                          { 
+                            name: 'Order_Transaction', 
+                            score: 0.85, 
+                            metrics: { identity: 0.82, cohesion: 0.85, separation: 0.80, relationship: 0.92 },
+                            suggestion: 'Split'
+                          },
+                          { 
+                            name: 'Product_Catalog', 
+                            score: 0.78, 
+                            metrics: { identity: 0.75, cohesion: 0.80, separation: 0.72, relationship: 0.85 },
+                            suggestion: 'Merge'
+                          }
+                        ].map((candidate, idx) => (
+                          <div key={idx} className="p-4 hover:bg-slate-800/30 transition-colors">
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-sm font-bold text-slate-200">{candidate.name}</div>
+                                  {candidate.suggestion && (
+                                    <span className={cn(
+                                      "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border",
+                                      candidate.suggestion === 'Split' ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20" : "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
+                                    )}>
+                                      {candidate.suggestion} Suggestion
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center space-x-4 mt-2">
+                                  <div className="flex items-center space-x-1.5">
+                                    <span className="text-xs text-slate-500">Score</span>
+                                    <span className={cn(
+                                      "text-xs font-mono font-bold",
+                                      candidate.score >= 0.9 ? "text-emerald-400" : candidate.score >= 0.8 ? "text-yellow-400" : "text-red-400"
+                                    )}>{candidate.score.toFixed(2)}</span>
+                                  </div>
+                                  <div className="h-3 w-px bg-slate-700"></div>
+                                  <div className="flex items-center space-x-3 text-[10px] font-mono text-slate-400">
+                                    <span title="Identity Strength">ID: {candidate.metrics.identity.toFixed(2)}</span>
+                                    <span title="Cohesion">COH: {candidate.metrics.cohesion.toFixed(2)}</span>
+                                    <span title="Separation">SEP: {candidate.metrics.separation.toFixed(2)}</span>
+                                    <span title="Relationship Support">REL: {candidate.metrics.relationship.toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                {candidate.suggestion && (
+                                  <button className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded transition-colors border border-slate-700">
+                                    Review {candidate.suggestion}
+                                  </button>
+                                )}
+                                <button className="px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 text-xs font-medium rounded transition-colors border border-indigo-500/30">
+                                  Open in Modeler
+                                </button>
                               </div>
                             </div>
-                            <button className="text-xs text-indigo-400 hover:text-indigo-300">查看代码</button>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Models List */}
-                    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                      <div className="px-4 py-3 border-b border-slate-800 bg-slate-900/50 flex items-center justify-between">
-                        <h4 className="text-sm font-bold text-slate-200">生成的模型 (Models)</h4>
-                      </div>
-                      <div className="divide-y divide-slate-800">
-                        {[
-                          { name: 'dim_users', type: 'Dimension', fields: 15 },
-                          { name: 'fact_sales', type: 'Fact', fields: 24 },
-                          { name: 'mart_daily_revenue', type: 'Data Mart', fields: 8 }
-                        ].map((model, idx) => (
-                          <div key={idx} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
-                            <div>
-                              <div className="text-sm font-bold text-slate-200">{model.name}</div>
-                              <div className="text-xs text-slate-500 mt-1">
-                                {model.type} • {model.fields} fields
-                              </div>
-                            </div>
-                            <button className="text-xs text-indigo-400 hover:text-indigo-300">查看模型</button>
-                          </div>
-                        ))}
-                      </div>
+                    {/* E.3 Actions */}
+                    <div className="flex items-center space-x-3 pt-2">
+                      <button className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center">
+                        <Box size={16} className="mr-2" />
+                        Open Object Candidates
+                      </button>
+                      <button className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors border border-slate-700 flex items-center justify-center">
+                        <Download size={16} className="mr-2" />
+                        Export Candidates
+                      </button>
+                      <button className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors border border-slate-700 flex items-center justify-center">
+                        <RotateCcw size={16} className="mr-2" />
+                        Rebuild Candidates
+                      </button>
                     </div>
                   </div>
                 )}

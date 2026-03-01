@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, Filter, Plus, Clock, MessageSquare, PlayCircle, 
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AIOpsWorkbenchRequestCreateModal from '@/components/AIOpsWorkbenchRequestCreateModal';
+import AIOpsTemplateLibraryModal from '@/components/AIOpsTemplateLibraryModal';
 
 const MOCK_REQUESTS = [
   { 
@@ -20,6 +21,7 @@ const MOCK_REQUESTS = [
     blockers: { hard: 0, soft: 3 },
     lastRun: '10分钟前',
     cost: '12.4k / 8',
+    isMine: true
   },
   { 
     id: 'REQ-20260226-042', 
@@ -31,6 +33,7 @@ const MOCK_REQUESTS = [
     blockers: { hard: 1, soft: 0 },
     lastRun: '2小时前',
     cost: '5.2k / 3',
+    isMine: false
   },
   { 
     id: 'REQ-20260225-089', 
@@ -42,6 +45,7 @@ const MOCK_REQUESTS = [
     blockers: { hard: 0, soft: 0 },
     lastRun: '1天前',
     cost: '28.1k / 15',
+    isMine: true
   },
   { 
     id: 'REQ-20260225-090', 
@@ -53,6 +57,7 @@ const MOCK_REQUESTS = [
     blockers: { hard: 2, soft: 0 },
     lastRun: '2天前',
     cost: '1.1k / 1',
+    isMine: false
   },
 ];
 
@@ -60,7 +65,42 @@ export default function AIOpsWorkbench() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isTemplateLibraryOpen, setIsTemplateLibraryOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+
+  // Filters
+  const [filterStatus, setFilterStatus] = useState('全部');
+  const [filterEmployee, setFilterEmployee] = useState('全部');
+  const [filterDomain, setFilterDomain] = useState('全部');
+  const [filterDatasource, setFilterDatasource] = useState('全部');
+  const [isMineOnly, setIsMineOnly] = useState(false);
+
+  const filteredRequests = useMemo(() => {
+    return MOCK_REQUESTS.filter(req => {
+      // Search
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesSearch = 
+          req.title.toLowerCase().includes(query) ||
+          req.id.toLowerCase().includes(query) ||
+          req.asset.domain.toLowerCase().includes(query) ||
+          req.asset.datasource.toLowerCase().includes(query) ||
+          req.asset.table.toLowerCase().includes(query) ||
+          req.employee.name.toLowerCase().includes(query);
+        if (!matchesSearch) return false;
+      }
+
+      // Filters
+      if (filterStatus !== '全部' && req.status !== filterStatus) return false;
+      if (filterEmployee !== '全部' && req.employee.name !== filterEmployee) return false;
+      if (filterDomain !== '全部' && req.asset.domain !== filterDomain) return false;
+      if (filterDatasource !== '全部' && req.asset.datasource !== filterDatasource) return false;
+      if (isMineOnly && !req.isMine) return false;
+
+      return true;
+    });
+  }, [searchQuery, filterStatus, filterEmployee, filterDomain, filterDatasource, isMineOnly]);
 
   const handleRowClick = (id: string) => {
     navigate(`/aiops/workbench/requests/${id}`);
@@ -70,6 +110,17 @@ export default function AIOpsWorkbench() {
     setIsCreateModalOpen(false);
     const newId = `REQ-20260227-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
     navigate(`/aiops/workbench/requests/${newId}`);
+  };
+
+  const handleSelectTemplate = (template: any) => {
+    setIsTemplateLibraryOpen(false);
+    setSelectedTemplate(template);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleOpenCreateModal = () => {
+    setSelectedTemplate(null);
+    setIsCreateModalOpen(true);
   };
 
   const toggleRowSelection = (id: string, e: React.MouseEvent) => {
@@ -85,7 +136,7 @@ export default function AIOpsWorkbench() {
 
   const toggleAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedRows(new Set(MOCK_REQUESTS.map(r => r.id)));
+      setSelectedRows(new Set(filteredRequests.map(r => r.id)));
     } else {
       setSelectedRows(new Set());
     }
@@ -116,12 +167,15 @@ export default function AIOpsWorkbench() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-700">
+          <button 
+            onClick={() => setIsTemplateLibraryOpen(true)}
+            className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+          >
             <Library size={16} />
             <span>模板库</span>
           </button>
           <button 
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={handleOpenCreateModal}
             className="flex items-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-900/20"
           >
             <Plus size={16} />
@@ -133,22 +187,63 @@ export default function AIOpsWorkbench() {
       {/* 1.2 FilterBar */}
       <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/30 shrink-0 flex items-center justify-between">
         <div className="flex items-center space-x-3 overflow-x-auto custom-scrollbar pb-1">
-          <button className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors whitespace-nowrap">
-            <span>状态: 全部</span>
-            <ChevronDown size={14} className="text-slate-500" />
-          </button>
-          <button className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors whitespace-nowrap">
-            <span>AI员工: 全部</span>
-            <ChevronDown size={14} className="text-slate-500" />
-          </button>
-          <button className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors whitespace-nowrap">
-            <span>业务域: 全部</span>
-            <ChevronDown size={14} className="text-slate-500" />
-          </button>
-          <button className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors whitespace-nowrap">
-            <span>数据源: 全部</span>
-            <ChevronDown size={14} className="text-slate-500" />
-          </button>
+          <div className="relative">
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="全部">状态: 全部</option>
+              <option value="RUNNING">状态: 运行中</option>
+              <option value="BLOCKED">状态: 已阻塞</option>
+              <option value="SUCCEEDED">状态: 已成功</option>
+              <option value="FAILED">状态: 已失败</option>
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          </div>
+          
+          <div className="relative">
+            <select 
+              value={filterEmployee}
+              onChange={(e) => setFilterEmployee(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="全部">AI员工: 全部</option>
+              {Array.from(new Set(MOCK_REQUESTS.map(r => r.employee.name))).map(name => (
+                <option key={name} value={name}>员工: {name}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <select 
+              value={filterDomain}
+              onChange={(e) => setFilterDomain(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="全部">业务域: 全部</option>
+              {Array.from(new Set(MOCK_REQUESTS.map(r => r.asset.domain))).map(domain => (
+                <option key={domain} value={domain}>域: {domain}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <select 
+              value={filterDatasource}
+              onChange={(e) => setFilterDatasource(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="全部">数据源: 全部</option>
+              {Array.from(new Set(MOCK_REQUESTS.map(r => r.asset.datasource))).map(ds => (
+                <option key={ds} value={ds}>源: {ds}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+          </div>
+
           <button className="flex items-center space-x-2 px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-300 hover:bg-slate-800 transition-colors whitespace-nowrap">
             <Clock size={14} className="text-slate-500" />
             <span>创建时间: 最近7天</span>
@@ -158,7 +253,12 @@ export default function AIOpsWorkbench() {
         <div className="flex items-center space-x-2 shrink-0 ml-4">
           <label className="flex items-center space-x-2 cursor-pointer">
             <div className="relative flex items-center justify-center w-4 h-4 rounded hover:bg-slate-800 transition-colors">
-              <input type="checkbox" className="peer sr-only" />
+              <input 
+                type="checkbox" 
+                className="peer sr-only" 
+                checked={isMineOnly}
+                onChange={(e) => setIsMineOnly(e.target.checked)}
+              />
               <div className="w-4 h-4 rounded border border-slate-500 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 flex items-center justify-center transition-colors">
                 <CheckSquare size={12} className="text-white opacity-0 peer-checked:opacity-100" />
               </div>
@@ -178,7 +278,7 @@ export default function AIOpsWorkbench() {
                   <input 
                     type="checkbox" 
                     className="rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-950"
-                    checked={selectedRows.size === MOCK_REQUESTS.length && MOCK_REQUESTS.length > 0}
+                    checked={selectedRows.size === filteredRequests.length && filteredRequests.length > 0}
                     onChange={toggleAllRows}
                   />
                 </th>
@@ -194,7 +294,7 @@ export default function AIOpsWorkbench() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50 text-slate-300">
-              {MOCK_REQUESTS.map((req) => (
+              {filteredRequests.map((req) => (
                 <tr 
                   key={req.id} 
                   onClick={() => handleRowClick(req.id)}
@@ -309,6 +409,13 @@ export default function AIOpsWorkbench() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateRequest}
+        initialTemplate={selectedTemplate}
+      />
+
+      <AIOpsTemplateLibraryModal
+        isOpen={isTemplateLibraryOpen}
+        onClose={() => setIsTemplateLibraryOpen(false)}
+        onSelectTemplate={handleSelectTemplate}
       />
     </div>
   );
