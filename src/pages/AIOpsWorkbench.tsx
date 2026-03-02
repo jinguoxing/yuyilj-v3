@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, Filter, Plus, Clock, MessageSquare, PlayCircle, 
+import {
+  Search, Filter, Plus, Clock, MessageSquare, PlayCircle,
   CheckCircle2, AlertTriangle, MoreVertical, LayoutDashboard,
   Library, ChevronDown, Database, Bot, ShieldAlert, Play,
-  Archive, ExternalLink, CheckSquare
+  Archive, ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AIOpsWorkbenchRequestCreateModal from '@/components/AIOpsWorkbenchRequestCreateModal';
@@ -67,7 +67,6 @@ export default function AIOpsWorkbench() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isTemplateLibraryOpen, setIsTemplateLibraryOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   // Filters
   const [filterStatus, setFilterStatus] = useState('全部');
@@ -121,25 +120,6 @@ export default function AIOpsWorkbench() {
   const handleOpenCreateModal = () => {
     setSelectedTemplate(null);
     setIsCreateModalOpen(true);
-  };
-
-  const toggleRowSelection = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
-  };
-
-  const toggleAllRows = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedRows(new Set(filteredRequests.map(r => r.id)));
-    } else {
-      setSelectedRows(new Set());
-    }
   };
 
   return (
@@ -260,7 +240,9 @@ export default function AIOpsWorkbench() {
                 onChange={(e) => setIsMineOnly(e.target.checked)}
               />
               <div className="w-4 h-4 rounded border border-slate-500 peer-checked:bg-indigo-500 peer-checked:border-indigo-500 flex items-center justify-center transition-colors">
-                <CheckSquare size={12} className="text-white opacity-0 peer-checked:opacity-100" />
+                <svg className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
               </div>
             </div>
             <span className="text-xs text-slate-400 select-none">仅看我的需求</span>
@@ -274,14 +256,6 @@ export default function AIOpsWorkbench() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
               <tr>
-                <th className="px-4 py-3 w-10 text-center">
-                  <input 
-                    type="checkbox" 
-                    className="rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-950"
-                    checked={selectedRows.size === filteredRequests.length && filteredRequests.length > 0}
-                    onChange={toggleAllRows}
-                  />
-                </th>
                 <th className="px-4 py-3 font-medium">需求标题</th>
                 <th className="px-4 py-3 font-medium">数据资产</th>
                 <th className="px-4 py-3 font-medium">AI员工</th>
@@ -295,19 +269,11 @@ export default function AIOpsWorkbench() {
             </thead>
             <tbody className="divide-y divide-slate-800/50 text-slate-300">
               {filteredRequests.map((req) => (
-                <tr 
-                  key={req.id} 
+                <tr
+                  key={req.id}
                   onClick={() => handleRowClick(req.id)}
                   className="hover:bg-slate-800/50 transition-colors cursor-pointer group relative"
                 >
-                  <td className="px-4 py-4 text-center" onClick={(e) => e.stopPropagation()}>
-                    <input 
-                      type="checkbox" 
-                      className="rounded border-slate-700 bg-slate-900 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-950"
-                      checked={selectedRows.has(req.id)}
-                      onChange={(e) => toggleRowSelection(req.id, e as any)}
-                    />
-                  </td>
                   <td className="px-4 py-4">
                     <div className="font-medium text-slate-200 group-hover:text-indigo-400 transition-colors flex items-center space-x-2">
                       <span>{req.title}</span>
