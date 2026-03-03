@@ -11,6 +11,7 @@ export default function AIOpsLayout() {
   const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
 
   const getPageTitle = () => {
+    if (location.pathname.includes('dashboard')) return '统一看板';
     if (location.pathname.includes('employee-workbench')) return 'AI 员工工作台';
     if (location.pathname.includes('workbench')) return '工作台';
     if (location.pathname.includes('employees')) return '数字员工台账';
@@ -63,6 +64,7 @@ export default function AIOpsLayout() {
         </div>
 
         <nav className="flex-1 py-4 space-y-1 px-2">
+          <NavItem to="/aiops/dashboard" icon={<LayoutDashboard size={20} />} label="统一看板" />
           <NavItem to="/aiops/workbench" icon={<LayoutDashboard size={20} />} label="工作台" />
           <NavItem to="/aiops/employee-workbench" icon={<Bot size={20} />} label="AI 员工工作台" />
           <NavItem to="/aiops/employees" icon={<Users size={20} />} label="数字员工台账" />

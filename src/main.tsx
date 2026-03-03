@@ -19,6 +19,7 @@ import AIOpsRuns from './pages/AIOpsRuns';
 import AIOpsReplay from './pages/AIOpsReplay';
 import AIOpsPolicies from './pages/AIOpsPolicies';
 import AIOpsMetrics from './pages/AIOpsMetrics';
+import AIOpsDashboard from './pages/AIOpsDashboard';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -35,6 +36,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="table-understanding/:lvId" element={<TableUnderstanding />} />
         </Route>
         <Route path="/aiops" element={<AIOpsLayout />}>
+          <Route path="dashboard" element={<AIOpsDashboard />} />
           <Route path="workbench" element={<AIOpsWorkbench />} />
           <Route path="workbench/requests/:requestId" element={<AIOpsWorkbenchRequestDetail />} />
           <Route path="workbench/requests/:requestId/stages/:stageId" element={<AIOpsWorkbenchRequestDetail />} />
