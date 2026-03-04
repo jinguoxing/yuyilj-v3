@@ -20,13 +20,34 @@ import AIOpsReplay from './pages/AIOpsReplay';
 import AIOpsPolicies from './pages/AIOpsPolicies';
 import AIOpsMetrics from './pages/AIOpsMetrics';
 import AIOpsDashboard from './pages/AIOpsDashboard';
+import GlobalAppShell from './layouts/GlobalAppShell';
+import NetworkStudio from './pages/NetworkStudio';
+import NetworkCenter from './pages/NetworkCenter';
+import LandingPage from './pages/LandingPage';
+import NetworkCompose from './pages/NetworkCompose';
+import NetworkInbox from './pages/NetworkInbox';
+import NetworkPackages from './pages/NetworkPackages';
+import NetworkPersonal from './pages/NetworkPersonal';
+import PlaceholderPage from './pages/PlaceholderPage';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/semantic/inbox" replace />} />
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/network" element={<GlobalAppShell />}>
+          <Route path="center" element={<NetworkCenter />} />
+          <Route path="studio" element={<NetworkStudio />} />
+          <Route path="compose" element={<NetworkCompose />} />
+          <Route path="inbox" element={<NetworkInbox />} />
+          <Route path="packages" element={<NetworkPackages />} />
+          <Route path="personal" element={<NetworkPersonal />} />
+          <Route path="runs" element={<PlaceholderPage />} />
+          <Route path="policy" element={<PlaceholderPage />} />
+          <Route path="ontology" element={<PlaceholderPage />} />
+          <Route path="*" element={<Navigate to="studio" replace />} />
+        </Route>
         <Route path="/semantic" element={<SemanticLayout />}>
           <Route path="inbox" element={<SemanticInbox />} />
           <Route path="releases" element={<SemanticReleases />} />

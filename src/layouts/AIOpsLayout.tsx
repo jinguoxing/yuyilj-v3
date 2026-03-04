@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Users, ListTodo, Activity, PlayCircle, ShieldCheck, BarChart3, Settings, Bell, Search, MessageSquareText, ChevronDown, LayoutDashboard, Bot } from 'lucide-react';
+import { Users, ListTodo, Activity, PlayCircle, ShieldCheck, BarChart3, Settings, Bell, Search, MessageSquareText, ChevronDown, LayoutDashboard, Bot, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import GlobalCopilot from '@/components/copilot/GlobalCopilot';
 
@@ -27,12 +27,12 @@ export default function AIOpsLayout() {
     <div className="flex h-screen w-full bg-slate-950 text-slate-200 font-sans overflow-hidden">
       {/* Sidebar */}
       <aside className="w-16 lg:w-64 flex-shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col transition-all duration-300">
-        <div className="h-14 flex items-center px-4 border-b border-slate-800 relative">
+        <div className="h-14 flex items-center px-4 border-b border-slate-800 relative cursor-pointer hover:bg-slate-800/50 transition-colors" onClick={() => navigate('/')}>
           <div className="w-8 h-8 rounded bg-emerald-600 flex items-center justify-center flex-shrink-0">
             <span className="font-bold text-white">AI</span>
           </div>
           <button 
-            onClick={() => setIsAppMenuOpen(!isAppMenuOpen)}
+            onClick={(e) => { e.stopPropagation(); setIsAppMenuOpen(!isAppMenuOpen); }}
             className="ml-3 flex-1 flex items-center justify-between hover:bg-slate-800 px-2 py-1 rounded transition-colors hidden lg:flex"
           >
             <span className="font-semibold text-slate-100 truncate">AI 运营中心</span>
@@ -41,6 +41,13 @@ export default function AIOpsLayout() {
 
           {isAppMenuOpen && (
             <div className="absolute top-12 left-4 right-4 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button 
+                onClick={() => { navigate('/'); setIsAppMenuOpen(false); }}
+                className="w-full text-left px-4 py-3 hover:bg-slate-700 text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center space-x-2"
+              >
+                <Home size={16} className="text-slate-400" />
+                <span>返回首页</span>
+              </button>
               <button 
                 onClick={() => { navigate('/semantic/inbox'); setIsAppMenuOpen(false); }}
                 className="w-full text-left px-4 py-3 hover:bg-slate-700 text-sm font-medium text-slate-300 hover:text-white transition-colors flex items-center space-x-2"
@@ -64,6 +71,7 @@ export default function AIOpsLayout() {
         </div>
 
         <nav className="flex-1 py-4 space-y-1 px-2">
+          <NavItem to="/" icon={<Home size={20} />} label="返回首页" />
           <NavItem to="/aiops/dashboard" icon={<LayoutDashboard size={20} />} label="统一看板" />
           <NavItem to="/aiops/workbench" icon={<LayoutDashboard size={20} />} label="工作台" />
           <NavItem to="/aiops/employee-workbench" icon={<Bot size={20} />} label="AI 员工工作台" />
