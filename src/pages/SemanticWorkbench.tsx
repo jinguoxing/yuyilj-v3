@@ -34,7 +34,7 @@ export default function SemanticWorkbench() {
     });
   }, [lvId, searchParams]);
 
-  if (!lvData) return <div className="p-8 text-slate-400">Loading Workbench...</div>;
+  if (!lvData) return <div className="p-8 text-slate-400">加载工作台中...</div>;
 
   return (
     <div className="flex flex-col h-full bg-slate-950">
@@ -49,7 +49,7 @@ export default function SemanticWorkbench() {
               <Table size={16} className="text-indigo-400" />
               <h1 className="text-lg font-semibold text-slate-100">{lvData.name}</h1>
               <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 border border-slate-700 text-slate-400 uppercase tracking-wider">
-                {lvData.status}
+                {lvData.status === 'DRAFT' ? '草稿' : lvData.status === 'PUBLISHED' ? '已发布' : lvData.status}
               </span>
             </div>
             <div className="text-xs text-slate-500 mt-0.5">{lvData.description}</div>
@@ -94,7 +94,7 @@ export default function SemanticWorkbench() {
                 key={field.id}
                 onClick={() => setSelectedField(field)}
                 className={cn(
-                  "flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm group transition-colors",
+                   "flex items-center justify-between px-3 py-2 rounded-md cursor-pointer text-sm group transition-colors",
                   selectedField?.id === field.id 
                     ? "bg-indigo-900/20 text-indigo-300" 
                     : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
@@ -164,7 +164,7 @@ export default function SemanticWorkbench() {
                         selectedField.status === 'WARNING' ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
                         "bg-red-500/10 text-red-400 border-red-500/20"
                       )}>
-                        {selectedField.status}
+                        {selectedField.status === 'VERIFIED' ? '已验证' : selectedField.status === 'WARNING' ? '警告' : selectedField.status}
                       </span>
                     </div>
                   </div>
@@ -187,18 +187,18 @@ export default function SemanticWorkbench() {
                       <label className="text-sm font-medium text-slate-400">语义类型</label>
                       <select className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500">
                         <option>{selectedField.semanticType}</option>
-                        <option>IDENTIFIER</option>
-                        <option>MEASURE</option>
-                        <option>DIMENSION</option>
-                        <option>TIME</option>
+                        <option>标识符 (IDENTIFIER)</option>
+                        <option>度量 (MEASURE)</option>
+                        <option>维度 (DIMENSION)</option>
+                        <option>时间 (TIME)</option>
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-slate-400">安全等级</label>
                       <select className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500">
-                        <option>Internal</option>
-                        <option>Confidential</option>
-                        <option>Public</option>
+                        <option>内部 (Internal)</option>
+                        <option>机密 (Confidential)</option>
+                        <option>公开 (Public)</option>
                       </select>
                     </div>
                   </div>
@@ -213,14 +213,14 @@ export default function SemanticWorkbench() {
                         <CheckCircle2 size={18} className="text-green-500" />
                         <span className="text-sm text-slate-300">非空检查 (Not Null)</span>
                       </div>
-                      <div className="text-xs text-slate-500">System Default</div>
+                      <div className="text-xs text-slate-500">系统默认</div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-slate-900 rounded border border-slate-800">
                       <div className="flex items-center space-x-3">
                         <CheckCircle2 size={18} className="text-green-500" />
                         <span className="text-sm text-slate-300">唯一性检查 (Unique)</span>
                       </div>
-                      <div className="text-xs text-slate-500">System Default</div>
+                      <div className="text-xs text-slate-500">系统默认</div>
                     </div>
                     <button className="w-full py-2 border border-dashed border-slate-700 rounded text-slate-500 hover:text-slate-300 hover:border-slate-500 transition-colors text-sm">
                       + 添加自定义规则
@@ -252,17 +252,17 @@ export default function SemanticWorkbench() {
                 <p>血缘关系图谱渲染区域</p>
                 <div className="flex items-center space-x-8 text-sm">
                   <div className="p-4 bg-slate-900 border border-slate-800 rounded-lg">
-                    <div className="text-xs text-slate-500 mb-1">Upstream</div>
+                    <div className="text-xs text-slate-500 mb-1">上游 (Upstream)</div>
                     <div className="font-mono text-slate-300">hr_db.employees</div>
                   </div>
                   <div className="h-px w-12 bg-slate-700"></div>
                   <div className="p-4 bg-indigo-900/20 border border-indigo-500/50 rounded-lg">
-                    <div className="text-xs text-indigo-400 mb-1">Current</div>
+                    <div className="text-xs text-indigo-400 mb-1">当前 (Current)</div>
                     <div className="font-mono text-indigo-200 font-bold">{lvData.name}</div>
                   </div>
                   <div className="h-px w-12 bg-slate-700"></div>
                   <div className="p-4 bg-slate-900 border border-slate-800 rounded-lg">
-                    <div className="text-xs text-slate-500 mb-1">Downstream</div>
+                    <div className="text-xs text-slate-500 mb-1">下游 (Downstream)</div>
                     <div className="font-mono text-slate-300">rpt_headcount</div>
                   </div>
                 </div>
@@ -276,14 +276,14 @@ export default function SemanticWorkbench() {
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">属性</h3>
           <div className="space-y-4">
             <div className="space-y-1">
-              <label className="text-xs text-slate-500">Owner</label>
+              <label className="text-xs text-slate-500">负责人 (Owner)</label>
               <div className="flex items-center space-x-2">
                 <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] text-white">DG</div>
                 <span className="text-sm text-slate-300">{lvData.owner}</span>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-slate-500">Domain</label>
+              <label className="text-xs text-slate-500">领域 (Domain)</label>
               <div className="text-sm text-slate-300">{lvData.domain}</div>
             </div>
             <div className="pt-4 border-t border-slate-800">
@@ -293,18 +293,18 @@ export default function SemanticWorkbench() {
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5"></div>
                   <div>
                     <span className="text-slate-300">User_01</span>
-                    <span className="text-slate-500"> updated description of </span>
+                    <span className="text-slate-500"> 更新了描述： </span>
                     <span className="text-slate-300 font-mono">salary_amt</span>
-                    <div className="text-slate-600 mt-0.5">2 hours ago</div>
+                    <div className="text-slate-600 mt-0.5">2 小时前</div>
                   </div>
                 </div>
                 <div className="flex items-start space-x-2 text-xs">
                   <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5"></div>
                   <div>
-                    <span className="text-slate-300">System</span>
-                    <span className="text-slate-500"> detected anomaly in </span>
+                    <span className="text-slate-300">系统</span>
+                    <span className="text-slate-500"> 检测到异常： </span>
                     <span className="text-slate-300 font-mono">dept_code</span>
-                    <div className="text-slate-600 mt-0.5">5 hours ago</div>
+                    <div className="text-slate-600 mt-0.5">5 小时前</div>
                   </div>
                 </div>
               </div>

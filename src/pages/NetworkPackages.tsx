@@ -3,7 +3,7 @@ import {
   Package, Box, CheckCircle2, AlertTriangle, Clock, 
   ChevronRight, Search, Filter, Download, Upload, 
   Globe, Shield, Activity, FileText, Zap, Server,
-  Layout, GitBranch, ArrowUpRight
+  Layout, GitBranch, ArrowUpRight, Database
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -30,54 +30,54 @@ export default function NetworkPackages() {
   const packages: DomainPackage[] = [
     {
       id: 'p1',
-      name: 'Customer_360_Core',
+      name: 'Customer_360_核心包',
       version: 'v2.4.0',
       status: 'Published',
       health: 98,
       coverage: 85,
-      updatedAt: '2 hours ago',
-      author: 'Data Team',
-      description: 'Core customer domain package including profile, identity resolution, and basic segmentation.',
+      updatedAt: '2 小时前',
+      author: '数据团队',
+      description: '核心客户领域包，包含画像、身份识别及基础分群。',
       services: [
-        { type: 'Intent', name: 'GetCustomerProfile', status: 'Active' },
-        { type: 'Intent', name: 'FindHighValueCustomers', status: 'Active' },
+        { type: 'Intent', name: '获取客户画像', status: 'Active' },
+        { type: 'Intent', name: '查找高价值客户', status: 'Active' },
         { type: 'API', name: 'customer-service-v2', status: 'Active' }
       ],
       constraints: [
-        { type: 'Auth', desc: 'Requires scope: customer.read' },
-        { type: 'Masking', desc: 'PII (email, phone) masked for non-admin' }
+        { type: 'Auth', desc: '需要权限范围: customer.read' },
+        { type: 'Masking', desc: '非管理员脱敏 PII (邮箱, 电话)' }
       ],
       validation: { schema: true, consistency: true, risk: 'Low' }
     },
     {
       id: 'p2',
-      name: 'Sales_Order_Analytics',
+      name: '销售订单分析',
       version: 'v1.1.0',
       status: 'Draft',
       health: 82,
       coverage: 60,
-      updatedAt: '1 day ago',
-      author: 'Sales Ops',
-      description: 'Order processing and revenue analytics domain model.',
+      updatedAt: '1 天前',
+      author: '销售运营',
+      description: '订单处理与营收分析领域模型。',
       services: [
         { type: 'Dataset', name: 'daily_sales_mart', status: 'Inactive' },
-        { type: 'Intent', name: 'AnalyzeRevenueTrend', status: 'Inactive' }
+        { type: 'Intent', name: '分析营收趋势', status: 'Inactive' }
       ],
       constraints: [
-        { type: 'Limit', desc: 'Max query window: 30 days' }
+        { type: 'Limit', desc: '最大查询窗口: 30 天' }
       ],
       validation: { schema: true, consistency: false, risk: 'Medium' }
     },
     {
       id: 'p3',
-      name: 'Logistics_Tracking',
+      name: '物流追踪',
       version: 'v1.0.5',
       status: 'Published',
       health: 95,
       coverage: 90,
-      updatedAt: '3 days ago',
-      author: 'Supply Chain',
-      description: 'Real-time shipment tracking and inventory management.',
+      updatedAt: '3 天前',
+      author: '供应链',
+      description: '实时货运追踪与库存管理。',
       services: [
         { type: 'API', name: 'shipment-tracking-api', status: 'Active' }
       ],
@@ -97,6 +97,15 @@ export default function NetworkPackages() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Published': return '已发布';
+      case 'Draft': return '草稿';
+      case 'Archived': return '已归档';
+      default: return status;
+    }
+  };
+
   const getHealthColor = (score: number) => {
     if (score >= 90) return 'text-emerald-400';
     if (score >= 70) return 'text-amber-400';
@@ -112,14 +121,14 @@ export default function NetworkPackages() {
             <Package size={18} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-white">Domain Packages</h1>
-            <p className="text-xs text-slate-400">Manage and deploy domain knowledge networks</p>
+            <h1 className="text-lg font-semibold text-white">领域发布包 (Domain Packages)</h1>
+            <p className="text-xs text-slate-400">管理并发布领域知识网络</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">
           <button className="flex items-center space-x-2 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors">
             <Upload size={14} />
-            <span>Import Package</span>
+            <span>导入发布包</span>
           </button>
         </div>
       </div>
@@ -133,12 +142,12 @@ export default function NetworkPackages() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input 
                 type="text" 
-                placeholder="Search packages..." 
+                placeholder="搜索发布包..." 
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-1 focus:ring-indigo-500 outline-none"
               />
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Packages ({packages.length})</span>
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">发布包 ({packages.length})</span>
               <Filter size={12} className="text-slate-500 cursor-pointer hover:text-slate-300" />
             </div>
           </div>
@@ -153,7 +162,7 @@ export default function NetworkPackages() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <span className={`text-[10px] px-1.5 py-0.5 rounded border ${getStatusColor(pkg.status)}`}>
-                    {pkg.status}
+                    {getStatusLabel(pkg.status)}
                   </span>
                   <span className="text-xs text-slate-500">{pkg.updatedAt}</span>
                 </div>
@@ -166,11 +175,11 @@ export default function NetworkPackages() {
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center space-x-1">
                     <Activity size={12} className={getHealthColor(pkg.health)} />
-                    <span className={getHealthColor(pkg.health)}>{pkg.health}% Health</span>
+                    <span className={getHealthColor(pkg.health)}>{pkg.health}% 健康度</span>
                   </div>
                   <div className="flex items-center space-x-1 text-slate-500">
                     <Box size={12} />
-                    <span>{pkg.coverage}% Cov</span>
+                    <span>{pkg.coverage}% 覆盖率</span>
                   </div>
                 </div>
               </div>
@@ -196,11 +205,11 @@ export default function NetworkPackages() {
                 <div className="flex space-x-3">
                   <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium border border-slate-700 transition-colors">
                     <Download size={16} />
-                    <span>Download</span>
+                    <span>下载</span>
                   </button>
                   <button className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium shadow-lg shadow-emerald-500/20 transition-colors">
                     <Globe size={16} />
-                    <span>Deploy</span>
+                    <span>发布</span>
                   </button>
                 </div>
               </div>
@@ -208,23 +217,23 @@ export default function NetworkPackages() {
               {/* Stats Grid */}
               <div className="grid grid-cols-4 gap-4 mb-8">
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Health Score</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">健康评分</div>
                   <div className={`text-2xl font-bold ${getHealthColor(selectedPkg.health)}`}>{selectedPkg.health}/100</div>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Domain Coverage</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">领域覆盖率</div>
                   <div className="text-2xl font-bold text-indigo-400">{selectedPkg.coverage}%</div>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Services</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">服务项</div>
                   <div className="text-2xl font-bold text-blue-400">{selectedPkg.services.length}</div>
                 </div>
                 <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
-                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Risk Level</div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">风险等级</div>
                   <div className={`text-2xl font-bold ${
                     selectedPkg.validation.risk === 'High' ? 'text-red-400' : 
                     selectedPkg.validation.risk === 'Medium' ? 'text-amber-400' : 'text-emerald-400'
-                  }`}>{selectedPkg.validation.risk}</div>
+                  }`}>{selectedPkg.validation.risk === 'High' ? '高' : selectedPkg.validation.risk === 'Medium' ? '中' : '低'}</div>
                 </div>
               </div>
 
@@ -235,7 +244,7 @@ export default function NetworkPackages() {
                   <section>
                     <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center">
                       <Layout size={16} className="mr-2" />
-                      Included Subgraph (Snapshot)
+                      包含子图 (Subgraph Snapshot)
                     </h3>
                     <div className="bg-slate-900 border border-slate-800 rounded-xl p-1 h-64 relative overflow-hidden group">
                       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
@@ -266,7 +275,7 @@ export default function NetworkPackages() {
                       </div>
                       <div className="absolute bottom-3 right-3">
                         <button className="px-3 py-1.5 bg-slate-800/80 backdrop-blur text-xs text-slate-300 rounded border border-slate-700 hover:text-white transition-colors">
-                          View Full Graph
+                          查看完整图谱
                         </button>
                       </div>
                     </div>
@@ -276,40 +285,40 @@ export default function NetworkPackages() {
                   <section>
                     <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center">
                       <CheckCircle2 size={16} className="mr-2" />
-                      Validation Report
+                      校验报告 (Validation Report)
                     </h3>
                     <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
                       <div className="p-4 border-b border-slate-800 flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <div className={`w-2 h-2 rounded-full ${selectedPkg.validation.risk === 'High' ? 'bg-red-500' : 'bg-emerald-500'}`}></div>
-                          <span className="text-sm font-medium text-slate-200">Overall Status</span>
+                          <span className="text-sm font-medium text-slate-200">总体状态</span>
                         </div>
-                        <span className="text-xs text-slate-500">Last run: {selectedPkg.updatedAt}</span>
+                        <span className="text-xs text-slate-500">最后运行: {selectedPkg.updatedAt}</span>
                       </div>
                       <div className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Schema Integrity</span>
+                          <span className="text-sm text-slate-400">本体约束检查 (Schema)</span>
                           {selectedPkg.validation.schema ? (
-                            <span className="flex items-center text-xs text-emerald-400"><CheckCircle2 size={14} className="mr-1" /> Passed</span>
+                            <span className="flex items-center text-xs text-emerald-400"><CheckCircle2 size={14} className="mr-1" /> 通过</span>
                           ) : (
-                            <span className="flex items-center text-xs text-red-400"><AlertTriangle size={14} className="mr-1" /> Failed</span>
+                            <span className="flex items-center text-xs text-red-400"><AlertTriangle size={14} className="mr-1" /> 失败</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Semantic Consistency</span>
+                          <span className="text-sm text-slate-400">语义一致性检查 (Consistency)</span>
                           {selectedPkg.validation.consistency ? (
-                            <span className="flex items-center text-xs text-emerald-400"><CheckCircle2 size={14} className="mr-1" /> Passed</span>
+                            <span className="flex items-center text-xs text-emerald-400"><CheckCircle2 size={14} className="mr-1" /> 通过</span>
                           ) : (
-                            <span className="flex items-center text-xs text-amber-400"><AlertTriangle size={14} className="mr-1" /> Warning</span>
+                            <span className="flex items-center text-xs text-amber-400"><AlertTriangle size={14} className="mr-1" /> 警告</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-sm text-slate-400">Risk Assessment</span>
+                          <span className="text-sm text-slate-400">风险评估 (Risk)</span>
                           <span className={`text-xs font-medium px-2 py-0.5 rounded ${
                             selectedPkg.validation.risk === 'Low' ? 'bg-emerald-500/10 text-emerald-400' :
                             selectedPkg.validation.risk === 'Medium' ? 'bg-amber-500/10 text-amber-400' :
                             'bg-red-500/10 text-red-400'
-                          }`}>{selectedPkg.validation.risk} Risk</span>
+                          }`}>{selectedPkg.validation.risk === 'High' ? '高' : selectedPkg.validation.risk === 'Medium' ? '中' : '低'} 风险</span>
                         </div>
                       </div>
                     </div>
@@ -322,7 +331,7 @@ export default function NetworkPackages() {
                   <section>
                     <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center">
                       <Zap size={16} className="mr-2" />
-                      Exposed Services
+                      暴露服务 (Exposed Services)
                     </h3>
                     <div className="space-y-3">
                       {selectedPkg.services.map((svc, idx) => (
@@ -332,7 +341,7 @@ export default function NetworkPackages() {
                               svc.type === 'Intent' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' :
                               svc.type === 'API' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                               'bg-slate-700/50 text-slate-400 border-slate-600'
-                            }`}>{svc.type}</span>
+                            }`}>{svc.type === 'Intent' ? '意图' : svc.type === 'API' ? '接口' : '数据集'}</span>
                             <div className={`w-1.5 h-1.5 rounded-full ${svc.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-600'}`}></div>
                           </div>
                           <div className="text-sm font-medium text-slate-200 truncate">{svc.name}</div>
@@ -345,7 +354,7 @@ export default function NetworkPackages() {
                   <section>
                     <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center">
                       <Shield size={16} className="mr-2" />
-                      Constraints
+                      约束策略 (Constraints)
                     </h3>
                     <div className="space-y-3">
                       {selectedPkg.constraints.length > 0 ? selectedPkg.constraints.map((c, idx) => (
@@ -356,13 +365,13 @@ export default function NetworkPackages() {
                             {c.type === 'Limit' && <Activity size={14} className="text-red-400" />}
                           </div>
                           <div>
-                            <div className="text-xs font-medium text-slate-300 mb-0.5">{c.type} Policy</div>
+                            <div className="text-xs font-medium text-slate-300 mb-0.5">{c.type === 'Auth' ? '权限' : c.type === 'Masking' ? '脱敏' : '执行限制'} 策略</div>
                             <div className="text-xs text-slate-500 leading-relaxed">{c.desc}</div>
                           </div>
                         </div>
                       )) : (
                         <div className="text-xs text-slate-500 italic p-3 text-center bg-slate-900/50 rounded-lg border border-slate-800 border-dashed">
-                          No constraints defined
+                          未定义约束
                         </div>
                       )}
                     </div>
@@ -372,7 +381,7 @@ export default function NetworkPackages() {
                   <section>
                     <h3 className="text-sm font-semibold text-slate-300 mb-4 flex items-center">
                       <Server size={16} className="mr-2" />
-                      Deploy Targets
+                      发布目标 (Deploy Targets)
                     </h3>
                     <div className="space-y-2">
                       <button className="w-full flex items-center justify-between p-3 bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition-colors group">
@@ -380,7 +389,7 @@ export default function NetworkPackages() {
                           <div className="p-1.5 bg-indigo-500/20 rounded text-indigo-400 group-hover:text-indigo-300">
                             <Globe size={14} />
                           </div>
-                          <span className="text-xs font-medium text-slate-300 group-hover:text-white">Data Portal (Ask Data)</span>
+                          <span className="text-xs font-medium text-slate-300 group-hover:text-white">数据门户 (问数)</span>
                         </div>
                         <ArrowUpRight size={12} className="text-slate-500 group-hover:text-white" />
                       </button>
@@ -389,7 +398,7 @@ export default function NetworkPackages() {
                           <div className="p-1.5 bg-emerald-500/20 rounded text-emerald-400 group-hover:text-emerald-300">
                             <GitBranch size={14} />
                           </div>
-                          <span className="text-xs font-medium text-slate-300 group-hover:text-white">Agent Orchestrator</span>
+                          <span className="text-xs font-medium text-slate-300 group-hover:text-white">Agent 编排器</span>
                         </div>
                         <ArrowUpRight size={12} className="text-slate-500 group-hover:text-white" />
                       </button>
@@ -401,7 +410,7 @@ export default function NetworkPackages() {
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-slate-500">
               <Package size={48} className="mb-4 opacity-20" />
-              <p>Select a package to view details</p>
+              <p>选择一个发布包查看详情</p>
             </div>
           )}
         </div>

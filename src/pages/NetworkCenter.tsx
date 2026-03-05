@@ -31,19 +31,19 @@ export default function NetworkCenter() {
 
   const networks: Network[] = [
     { 
-      id: 1, name: 'Global Supply Chain', type: 'GKN', version: 'v2.4.0', status: 'Published', updated: '2h ago', owner: 'SC Team',
+      id: 1, name: '全球供应链', type: 'GKN', version: 'v2.4.0', status: 'Published', updated: '2小时前', owner: 'SC 团队',
       health: { unknown: 12, conflicts: 0 }
     },
     { 
-      id: 2, name: 'Customer 360', type: 'DKN', version: 'v1.2.1', status: 'Draft', updated: '5m ago', owner: 'Marketing',
+      id: 2, name: '客户 360', type: 'DKN', version: 'v1.2.1', status: 'Draft', updated: '5分钟前', owner: '市场部',
       health: { unknown: 5, conflicts: 2 }
     },
     { 
-      id: 3, name: 'Financial Reporting', type: 'DKN', version: 'v3.0.0', status: 'Published', updated: '1d ago', owner: 'Finance',
+      id: 3, name: '财务报表', type: 'DKN', version: 'v3.0.0', status: 'Published', updated: '1天前', owner: '财务部',
       health: { unknown: 0, conflicts: 0 }
     },
     { 
-      id: 4, name: 'My Research', type: 'PKN', version: 'v0.1.0', status: 'Draft', updated: 'Just now', owner: 'Admin User',
+      id: 4, name: '我的研究', type: 'PKN', version: 'v0.1.0', status: 'Draft', updated: '刚刚', owner: '管理员',
       health: { unknown: 8, conflicts: 1 }
     },
   ];
@@ -77,24 +77,24 @@ export default function NetworkCenter() {
       {/* Header */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
-          <h1 className="text-2xl font-bold text-white">Networks</h1>
-          <p className="text-slate-400 text-sm mt-1">Manage your organization's knowledge networks and domains.</p>
+          <h1 className="text-2xl font-bold text-white">全局业务知识网络</h1>
+          <p className="text-slate-400 text-sm mt-1">管理您组织的知识网络和领域。</p>
         </div>
         <div className="flex items-center space-x-3">
           <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium border border-slate-700 transition-colors">
             <Shield size={16} />
-            <span>Manage Access</span>
+            <span>管理权限</span>
           </button>
           <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium border border-slate-700 transition-colors">
             <Import size={16} />
-            <span>Import</span>
+            <span>导入</span>
           </button>
           <button 
             onClick={() => { setCreateStep(1); setIsCreateDrawerOpen(true); }}
             className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Plus size={16} />
-            <span>Create Network</span>
+            <span>创建网络</span>
           </button>
         </div>
       </div>
@@ -105,36 +105,36 @@ export default function NetworkCenter() {
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input 
             type="text" 
-            placeholder="Search networks..." 
+            placeholder="搜索网络..." 
             className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-200 focus:ring-1 focus:ring-indigo-500 outline-none"
           />
         </div>
         <div className="h-6 w-px bg-slate-800" />
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-500">Type:</span>
-          <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
-            <option>All Types</option>
-            <option>GKN (Org)</option>
-            <option>DKN (Domain)</option>
-            <option>PKN (User)</option>
-          </select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-500">Status:</span>
-          <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
-            <option>All Status</option>
-            <option>Published</option>
-            <option>Draft</option>
-          </select>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-slate-500">Owner:</span>
-          <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
-            <option>All Owners</option>
-            <option>Me</option>
-            <option>My Team</option>
-          </select>
-        </div>
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-slate-500">类型:</span>
+            <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
+              <option>全部类型</option>
+              <option>GKN (组织级)</option>
+              <option>DKN (领域级)</option>
+              <option>PKN (个人级)</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-slate-500">状态:</span>
+            <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
+              <option>全部状态</option>
+              <option>已发布</option>
+              <option>草稿</option>
+            </select>
+          </div>
+          <div className="flex items-center space-x-2 text-sm">
+            <span className="text-slate-500">所有者:</span>
+            <select className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 outline-none focus:border-indigo-500">
+              <option>全部所有者</option>
+              <option>我</option>
+              <option>我的团队</option>
+            </select>
+          </div>
       </div>
 
       {/* Network Cards Grid */}
@@ -190,17 +190,17 @@ export default function NetworkCenter() {
               <div className="flex items-center justify-between text-xs mb-3">
                 <div className="flex items-center space-x-2 text-slate-400">
                   <span className={`inline-block w-2 h-2 rounded-full ${net.status === 'Published' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                  <span>{net.status}</span>
+                  <span>{net.status === 'Published' ? '已发布' : '草稿'}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   {net.health.conflicts > 0 && (
-                    <span className="flex items-center text-rose-400" title="Conflicts">
+                    <span className="flex items-center text-rose-400" title="冲突">
                       <AlertCircle size={12} className="mr-1" />
                       {net.health.conflicts}
                     </span>
                   )}
                   {net.health.unknown > 0 && (
-                    <span className="flex items-center text-amber-400" title="Unknown Items">
+                    <span className="flex items-center text-amber-400" title="未知项">
                       <AlertCircle size={12} className="mr-1" />
                       {net.health.unknown}
                     </span>
@@ -210,13 +210,13 @@ export default function NetworkCenter() {
               
               <div className="grid grid-cols-2 gap-2">
                 <button className="flex items-center justify-center px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-medium transition-colors">
-                  Open Inbox
+                  打开待办
                 </button>
                 <button 
                   onClick={() => navigate('/network/studio')}
                   className="flex items-center justify-center px-3 py-1.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 rounded text-xs font-medium transition-colors"
                 >
-                  Open Studio
+                  打开工作台
                 </button>
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function NetworkCenter() {
               className="fixed top-0 right-0 h-full w-[500px] bg-slate-900 border-l border-slate-800 shadow-2xl z-50 flex flex-col"
             >
               <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white">Create New Network</h2>
+                <h2 className="text-xl font-bold text-white">创建新网络</h2>
                 <button onClick={() => setIsCreateDrawerOpen(false)} className="text-slate-400 hover:text-white">
                   <X size={24} />
                 </button>
@@ -261,7 +261,7 @@ export default function NetworkCenter() {
 
                 {createStep === 1 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-white mb-4">Select Network Type</h3>
+                    <h3 className="text-lg font-medium text-white mb-4">选择网络类型</h3>
                     
                     <div 
                       onClick={() => setNewNetworkType('GKN')}
@@ -269,9 +269,9 @@ export default function NetworkCenter() {
                     >
                       <div className="flex items-center space-x-3 mb-2">
                         <Globe className={newNetworkType === 'GKN' ? 'text-indigo-400' : 'text-slate-400'} />
-                        <span className="font-bold text-white">GKN (Global Knowledge Network)</span>
+                        <span className="font-bold text-white">GKN (全球知识网络)</span>
                       </div>
-                      <p className="text-sm text-slate-400">Organization-wide knowledge graph. Single source of truth for all domains.</p>
+                      <p className="text-sm text-slate-400">组织范围的知识图谱。所有领域的单一事实来源。</p>
                     </div>
 
                     <div 
@@ -280,9 +280,9 @@ export default function NetworkCenter() {
                     >
                       <div className="flex items-center space-x-3 mb-2">
                         <Box className={newNetworkType === 'DKN' ? 'text-emerald-400' : 'text-slate-400'} />
-                        <span className="font-bold text-white">DKN (Domain Knowledge Network)</span>
+                        <span className="font-bold text-white">DKN (领域知识网络)</span>
                       </div>
-                      <p className="text-sm text-slate-400">Domain-specific subgraph. Focused on specific business scenarios and deliverables.</p>
+                      <p className="text-sm text-slate-400">特定领域的子图。专注于特定的业务场景和交付物。</p>
                     </div>
 
                     <div 
@@ -291,30 +291,30 @@ export default function NetworkCenter() {
                     >
                       <div className="flex items-center space-x-3 mb-2">
                         <User className={newNetworkType === 'PKN' ? 'text-amber-400' : 'text-slate-400'} />
-                        <span className="font-bold text-white">PKN (Personal Knowledge Network)</span>
+                        <span className="font-bold text-white">PKN (个人知识网络)</span>
                       </div>
-                      <p className="text-sm text-slate-400">User-specific workspace. Personalized views, shortcuts, and draft experiments.</p>
+                      <p className="text-sm text-slate-400">用户特定的工作空间。个性化视图、快捷方式和草稿实验。</p>
                     </div>
                   </div>
                 )}
 
                 {createStep === 2 && (
                   <div className="space-y-6">
-                    <h3 className="text-lg font-medium text-white">Basic Information</h3>
+                    <h3 className="text-lg font-medium text-white">基础信息</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Network Name</label>
-                        <input type="text" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g., Supply Chain Optimization" />
+                        <label className="block text-sm font-medium text-slate-400 mb-1">网络名称</label>
+                        <input type="text" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="例如：供应链优化" />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Description</label>
-                        <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none h-24" placeholder="Describe the purpose of this network..." />
+                        <label className="block text-sm font-medium text-slate-400 mb-1">描述</label>
+                        <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none h-24" placeholder="描述此网络的目的..." />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-1">Owner</label>
+                        <label className="block text-sm font-medium text-slate-400 mb-1">所有者</label>
                         <div className="flex items-center space-x-2 p-2 bg-slate-950 border border-slate-800 rounded-lg">
                           <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs">AU</div>
-                          <span className="text-sm text-white">Admin User (Me)</span>
+                          <span className="text-sm text-white">管理员 (我)</span>
                         </div>
                       </div>
                     </div>
@@ -324,26 +324,26 @@ export default function NetworkCenter() {
                 {createStep === 3 && (
                   <div className="space-y-6">
                     <h3 className="text-lg font-medium text-white">
-                      {newNetworkType === 'DKN' ? 'Domain Configuration' : newNetworkType === 'PKN' ? 'Personalization' : 'GKN Configuration'}
+                      {newNetworkType === 'DKN' ? '领域配置' : newNetworkType === 'PKN' ? '个性化配置' : 'GKN 配置'}
                     </h3>
                     
                     {newNetworkType === 'DKN' && (
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-400 mb-1">Domain Goal (Scenario)</label>
-                          <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none h-24" placeholder="e.g., Optimize inventory turnover for Q3..." />
+                          <label className="block text-sm font-medium text-slate-400 mb-1">领域目标 (场景)</label>
+                          <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none h-24" placeholder="例如：优化第三季度的库存周转率..." />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-400 mb-1">Base GKN Version</label>
+                          <label className="block text-sm font-medium text-slate-400 mb-1">基础 GKN 版本</label>
                           <select className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option>GKN v2.4.0 (Latest Stable)</option>
+                            <option>GKN v2.4.0 (最新稳定版)</option>
                             <option>GKN v2.3.5</option>
                           </select>
                         </div>
                         <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-lg flex items-start space-x-3">
                           <Wand2 className="text-indigo-400 flex-shrink-0 mt-0.5" size={18} />
                           <div className="text-sm text-indigo-200">
-                            <span className="font-bold">AI Compose:</span> Upon creation, we will launch the Compose Wizard to generate an initial subgraph based on your domain goal.
+                            <span className="font-bold">AI 编排:</span> 创建后，我们将启动编排向导，根据您的领域目标生成初始子图。
                           </div>
                         </div>
                       </div>
@@ -352,18 +352,18 @@ export default function NetworkCenter() {
                     {newNetworkType === 'PKN' && (
                       <div className="space-y-4">
                         <div>
-                          <label className="block text-sm font-medium text-slate-400 mb-1">Base Domain (Optional)</label>
+                          <label className="block text-sm font-medium text-slate-400 mb-1">基础领域 (可选)</label>
                           <select className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option>None (Start Fresh)</option>
-                            <option>Global Supply Chain</option>
-                            <option>Customer 360</option>
+                            <option>无 (从头开始)</option>
+                            <option>全球供应链</option>
+                            <option>客户 360</option>
                           </select>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-slate-400 mb-1">Privacy</label>
+                          <label className="block text-sm font-medium text-slate-400 mb-1">隐私</label>
                           <div className="flex items-center space-x-2">
                             <Lock size={16} className="text-slate-500" />
-                            <span className="text-sm text-slate-300">Private to me</span>
+                            <span className="text-sm text-slate-300">仅对我可见</span>
                           </div>
                         </div>
                       </div>
@@ -378,7 +378,7 @@ export default function NetworkCenter() {
                     onClick={() => setCreateStep(createStep - 1)}
                     className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
                   >
-                    Back
+                    上一步
                   </button>
                 ) : (
                   <div></div>
@@ -389,7 +389,7 @@ export default function NetworkCenter() {
                     onClick={() => setCreateStep(createStep + 1)}
                     className="flex items-center space-x-2 px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
                   >
-                    <span>Next</span>
+                    <span>下一步</span>
                     <ArrowRight size={16} />
                   </button>
                 ) : (
@@ -398,7 +398,7 @@ export default function NetworkCenter() {
                     className="flex items-center space-x-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
                   >
                     <CheckCircle2 size={16} />
-                    <span>Create & Compose</span>
+                    <span>创建并编排</span>
                   </button>
                 )}
               </div>

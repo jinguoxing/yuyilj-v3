@@ -4,7 +4,7 @@ import {
   Wand2, ArrowRight, CheckCircle2, AlertTriangle, 
   Database, Shield, FileText, Layers, Box, 
   ChevronRight, ChevronDown, Play, Save, Upload,
-  Search, Plus, X, Sparkles, ArrowLeft
+  Search, Plus, X, Sparkles, ArrowLeft, GitBranch
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -16,18 +16,18 @@ export default function NetworkCompose() {
 
   // Mock Data
   const planOutline = [
-    { category: 'Assets', count: 12, items: ['Table: ORDERS', 'Table: CUSTOMERS', 'Table: PRODUCTS'] },
-    { category: 'Standards', count: 5, items: ['Std: ISO-8601 Date', 'Std: Currency USD'] },
-    { category: 'Assertions', count: 8, items: ['Rule: Order Total > 0', 'Rule: Valid Email'] },
-    { category: 'Objects', count: 3, items: ['Obj: Customer', 'Obj: Order'] },
-    { category: 'Actions', count: 2, items: ['API: CreateOrder', 'API: GetOrderStatus'] },
+    { category: '资产 (Assets)', count: 12, items: ['表: ORDERS', '表: CUSTOMERS', '表: PRODUCTS'] },
+    { category: '标准 (Standards)', count: 5, items: ['标准: ISO-8601 日期', '标准: 货币 USD'] },
+    { category: '断言 (Assertions)', count: 8, items: ['规则: 订单总额 > 0', '规则: 有效邮箱'] },
+    { category: '对象 (Objects)', count: 3, items: ['对象: Customer', '对象: Order'] },
+    { category: '动作 (Actions)', count: 2, items: ['接口: CreateOrder', '接口: GetOrderStatus'] },
   ];
 
   const changeSet = [
-    { type: 'Add Node', count: 15, details: ['Added 3 Object Nodes', 'Added 12 Data Nodes'] },
-    { type: 'Add Edge', count: 24, details: ['Added 24 Relationship Edges'] },
-    { type: 'Add Policy', count: 2, details: ['Added Privacy Policy', 'Added Retention Policy'] },
-    { type: 'Add Rule', count: 8, details: ['Added 8 Data Quality Rules'] },
+    { type: '新增节点', count: 15, details: ['新增 3 个对象节点', '新增 12 个数据节点'] },
+    { type: '新增关系', count: 24, details: ['新增 24 条关联关系'] },
+    { type: '新增策略', count: 2, details: ['新增隐私策略', '新增保留策略'] },
+    { type: '新增规则', count: 8, details: ['新增 8 条数据质量规则'] },
   ];
 
   const handleAnalyze = () => {
@@ -153,9 +153,9 @@ function StepIntent({ intent, setIntent, onNext, isAnalyzing }: any) {
               基座版本 (Base Network)
             </h3>
             <select className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 text-slate-200 outline-none focus:border-indigo-500">
-              <option>GKN v2.4.0 (Latest Stable)</option>
+              <option>GKN v2.4.0 (最新稳定版)</option>
               <option>GKN v2.3.5</option>
-              <option>DKN: Supply Chain v1.2</option>
+              <option>DKN: 供应链 v1.2</option>
             </select>
           </div>
 
@@ -213,7 +213,7 @@ function StepIntent({ intent, setIntent, onNext, isAnalyzing }: any) {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-slate-400">计算成本预估</span>
-                  <span className="text-slate-200">Medium</span>
+                  <span className="text-slate-200">中 (Medium)</span>
                 </div>
                 <div className="flex gap-1">
                   <div className="h-2 flex-1 bg-emerald-500 rounded-l"></div>
@@ -330,7 +330,7 @@ function StepPropose({ planOutline, onBack, onNext }: any) {
               return (
                 <div key={i} className="absolute top-1/2 left-1/2 w-16 h-16 -ml-8 -mt-8 z-10" style={{ transform: `translate(${x}px, ${y}px)` }}>
                   <div className="w-full h-full rounded-full bg-slate-800 border border-slate-600 flex items-center justify-center hover:border-indigo-400 transition-colors cursor-pointer">
-                    <span className="text-xs text-slate-300">Node {i+1}</span>
+                    <span className="text-xs text-slate-300">节点 {i+1}</span>
                   </div>
                   {/* Connection Line */}
                   <svg className="absolute top-1/2 left-1/2 w-[200px] h-[200px] -ml-[100px] -mt-[100px] pointer-events-none" style={{ transform: `translate(${-x/2}px, ${-y/2}px) rotate(${deg + 180}deg)` }}>
@@ -361,7 +361,7 @@ function StepPropose({ planOutline, onBack, onNext }: any) {
           
           <div>
             <h4 className="text-sm font-medium text-slate-200 mb-2">缺失内容 (Missing)</h4>
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
               <div className="flex items-start space-x-2">
                 <AlertTriangle size={14} className="text-amber-400 mt-0.5" />
                 <p className="text-xs text-amber-200">
@@ -423,9 +423,9 @@ function StepCommit({ changeSet, onBack, onApply }: any) {
         <div className="p-4 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <GitBranch size={18} className="text-indigo-400" />
-            <span className="font-mono text-sm text-slate-300">ChangeSet #CS-2024-0892</span>
+            <span className="font-mono text-sm text-slate-300">变更集 #CS-2024-0892</span>
           </div>
-          <span className="text-xs text-slate-500">Created just now</span>
+          <span className="text-xs text-slate-500">刚刚创建</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -434,12 +434,12 @@ function StepCommit({ changeSet, onBack, onApply }: any) {
               <div className="bg-slate-800/30 px-4 py-3 flex justify-between items-center">
                 <div className="flex items-center space-x-3">
                   <div className={`p-1.5 rounded ${
-                    item.type.includes('Node') ? 'bg-indigo-500/20 text-indigo-400' :
-                    item.type.includes('Edge') ? 'bg-emerald-500/20 text-emerald-400' :
+                    item.type.includes('节点') ? 'bg-indigo-500/20 text-indigo-400' :
+                    item.type.includes('关系') ? 'bg-emerald-500/20 text-emerald-400' :
                     'bg-amber-500/20 text-amber-400'
                   }`}>
-                    {item.type.includes('Node') ? <Box size={16} /> : 
-                     item.type.includes('Edge') ? <ArrowRight size={16} /> : 
+                    {item.type.includes('节点') ? <Box size={16} /> : 
+                     item.type.includes('关系') ? <ArrowRight size={16} /> : 
                      <Shield size={16} />}
                   </div>
                   <span className="font-medium text-slate-200">{item.type}</span>
@@ -473,18 +473,18 @@ function StepCommit({ changeSet, onBack, onApply }: any) {
           <div className="flex items-center space-x-3">
             <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors border border-slate-700">
               <Play size={16} />
-              <span>Run Validation</span>
+              <span>运行校验 (Validation)</span>
             </button>
             <button className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors border border-slate-700">
               <Upload size={16} />
-              <span>Publish Package</span>
+              <span>发布发布包 (Publish)</span>
             </button>
             <button 
               onClick={onApply}
               className="flex items-center space-x-2 px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-emerald-500/20"
             >
               <Save size={16} />
-              <span>Apply as Draft</span>
+              <span>应用为草稿</span>
             </button>
           </div>
         </div>

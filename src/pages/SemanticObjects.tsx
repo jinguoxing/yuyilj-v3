@@ -233,7 +233,7 @@ export default function SemanticObjects() {
     navigate('/semantic/releases');
   };
 
-  if (!data) return <div className="p-8 text-slate-400">Loading Objects...</div>;
+  if (!data) return <div className="p-8 text-slate-400">正在加载对象...</div>;
 
   return (
     <div className="flex flex-col h-full bg-slate-950 relative font-sans text-slate-200">
@@ -246,7 +246,7 @@ export default function SemanticObjects() {
           <div className="h-6 w-px bg-slate-800 mx-2" />
           <h1 className="text-sm font-semibold flex items-center space-x-2">
             <span>对象候选生成</span>
-            <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/30 font-mono">Reasoning LLM</span>
+            <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/30 font-mono">推理大模型 (Reasoning LLM)</span>
           </h1>
         </div>
 
@@ -469,11 +469,11 @@ export default function SemanticObjects() {
                     <div className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">当前对象 (保留)</div>
                     <div className="font-medium text-slate-200 mb-2">{selectedObject?.name}</div>
                     <div className="flex-1 overflow-y-auto space-y-1 pr-1">
-                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> employee_id</div>
-                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> full_name</div>
-                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> hire_date</div>
-                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> dept_code</div>
-                      <div className="text-xs text-slate-500 italic pl-4">+ 3 more...</div>
+                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> employee_id (员工ID)</div>
+                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> full_name (姓名)</div>
+                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> hire_date (入职日期)</div>
+                      <div className="text-xs text-slate-400 flex items-center"><Check size={10} className="mr-1 text-green-500"/> dept_code (部门代码)</div>
+                      <div className="text-xs text-slate-500 italic pl-4">还有 3 个...</div>
                     </div>
                   </div>
 
@@ -488,21 +488,21 @@ export default function SemanticObjects() {
                     </div>
                     <div className="text-xs font-semibold text-indigo-300 mb-2 uppercase tracking-wider">新对象 (建议)</div>
                     <div className="font-medium text-indigo-200 mb-2">
-                      {splitStrategy === 'sensitivity' ? `${selectedObject?.name}_Sensitive` : `${selectedObject?.name}_Detail`}
+                      {splitStrategy === 'sensitivity' ? `${selectedObject?.name}_敏感信息` : `${selectedObject?.name}_详情`}
                     </div>
                     <div className="flex-1 overflow-y-auto space-y-1 pr-1">
                       {splitStrategy === 'sensitivity' ? (
                         <>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> annual_salary</div>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> ssn_number</div>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> bonus_amt</div>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> tax_bracket</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> annual_salary (年薪)</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> ssn_number (社保号)</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> bonus_amt (奖金)</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> tax_bracket (税率)</div>
                         </>
                       ) : (
                         <>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> biography_text</div>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> previous_employment</div>
-                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> education_history</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> biography_text (简历)</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> previous_employment (工作经历)</div>
+                          <div className="text-xs text-indigo-300/80 flex items-center"><Database size={10} className="mr-1"/> education_history (教育背景)</div>
                         </>
                       )}
                     </div>
@@ -565,7 +565,7 @@ export default function SemanticObjects() {
                         <Box size={16} className="text-slate-500 group-hover:text-blue-400" />
                         <div className="text-left">
                           <div className="text-sm font-medium text-slate-300 group-hover:text-blue-200">{obj.name}</div>
-                          <div className="text-[10px] text-slate-500">{obj.fieldCount} fields • {obj.type}</div>
+                          <div className="text-[10px] text-slate-500">{obj.fieldCount} 字段 • {obj.type === 'PRIMARY' ? '主对象' : obj.type === 'REFERENCE' ? '引用对象' : obj.type}</div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -862,7 +862,7 @@ function StructureView({
                   <div className="flex items-center space-x-2">
                     <h2 className="text-base font-bold text-slate-100">{selectedObject.name}</h2>
                     <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 border border-slate-700 text-slate-400 font-mono">
-                      {selectedObject.type}
+                      {selectedObject.type === 'PRIMARY' ? '主对象' : selectedObject.type === 'REFERENCE' ? '引用对象' : selectedObject.type}
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-500 flex items-center space-x-1">
@@ -912,7 +912,7 @@ function StructureView({
                       <div>
                         <h4 className="text-sm font-bold text-indigo-300">AI 建议：检测到混合语义，建议拆分</h4>
                         <p className="text-xs text-slate-400 mt-1.5 leading-relaxed max-w-xl">
-                          Reasoning LLM 分析发现该对象包含 <span className="text-indigo-200 font-medium">核心身份信息</span> 和 <span className="text-indigo-200 font-medium">敏感薪资</span> 两类语义簇。
+                          推理大模型 (Reasoning LLM) 分析发现该对象包含 <span className="text-indigo-200 font-medium">核心身份信息</span> 和 <span className="text-indigo-200 font-medium">敏感薪资</span> 两类语义簇。
                           拆分后可提升数据安全管控粒度，并降低下游模型理解风险。
                         </p>
                       </div>
@@ -1073,7 +1073,7 @@ function StructureView({
           </span>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {isDraggingToPool && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}

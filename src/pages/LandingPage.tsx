@@ -11,31 +11,31 @@ export default function LandingPage() {
 
   const products = [
     {
-      id: 'network',
-      title: 'Global Knowledge Network',
-      description: 'Unified knowledge graph for organization, domain, and personal intelligence.',
-      icon: Globe,
-      color: 'indigo',
-      path: '/network/studio',
-      features: ['Network Registry', 'Graph Studio', 'AI Compose', 'Policy & Triage']
-    },
-    {
       id: 'semantic',
-      title: 'Semantic Governance',
-      description: 'Manage semantic layers, table understanding, and object generation.',
+      title: '语义治理',
+      description: '管理语义层、表理解和对象生成，构建统一的数据语义底座。',
       icon: BrainCircuit,
       color: 'violet',
       path: '/semantic/inbox',
-      features: ['Semantic Inbox', 'Table Understanding', 'Object Generation', 'Release Management']
+      features: ['语义待办', '表结构理解', '业务对象生成', '发布管理']
+    },
+    {
+      id: 'network',
+      title: '知识网络',
+      description: '统一的组织级、领域级和个人级知识图谱，实现智能化决策。',
+      icon: Globe,
+      color: 'indigo',
+      path: '/network/studio',
+      features: ['网络注册中心', '图工作台', 'AI 编排', '策略与分流']
     },
     {
       id: 'aiops',
-      title: 'AIOps Center',
-      description: 'Monitor, manage, and optimize your AI employees and operational tasks.',
+      title: 'AIOps 中心',
+      description: '监控、管理和优化您的 AI 员工及运营任务，提升执行效率。',
       icon: Activity,
       color: 'emerald',
       path: '/aiops/dashboard',
-      features: ['Employee Workbench', 'Task Queue', 'Run Observability', 'Audit Replay']
+      features: ['员工工作台', '任务队列', '运行观测', '审计回放']
     }
   ];
 
@@ -54,13 +54,13 @@ export default function LandingPage() {
           >
             <div className="inline-flex items-center space-x-2 bg-slate-900/50 border border-slate-800 rounded-full px-4 py-1.5 mb-8 backdrop-blur-sm">
               <Sparkles size={14} className="text-amber-400" />
-              <span className="text-xs font-medium text-slate-300">Next-Gen AI Operating System</span>
+              <span className="text-xs font-medium text-slate-300">下一代 AI 操作系统</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-6">
-              Unified <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Intelligence</span> Platform
+              统一 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">智能</span> 平台
             </h1>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-              Orchestrate your AI workforce, govern semantic knowledge, and build global intelligence networks from a single control plane.
+              编排您的 AI 劳动力，治理语义知识，并从单一控制平面构建全球智能网络。
             </p>
           </motion.div>
         </div>
@@ -102,7 +102,7 @@ export default function LandingPage() {
               </div>
               
               <div className="flex items-center text-sm font-medium text-white group-hover:translate-x-2 transition-transform">
-                <span>Enter Module</span>
+                <span>进入模块</span>
                 <ArrowRight size={16} className="ml-2" />
               </div>
             </motion.div>
@@ -112,7 +112,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 py-12 text-center text-slate-600 text-sm">
-        <p>© 2024 AI Operating System. All rights reserved.</p>
+        <p>© 2024 AI 操作系统. 保留所有权利。</p>
       </footer>
     </div>
   );

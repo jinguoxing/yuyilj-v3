@@ -28,6 +28,7 @@ import NetworkCompose from './pages/NetworkCompose';
 import NetworkInbox from './pages/NetworkInbox';
 import NetworkPackages from './pages/NetworkPackages';
 import NetworkPersonal from './pages/NetworkPersonal';
+import NetworkOntology from './pages/NetworkOntology';
 import PlaceholderPage from './pages/PlaceholderPage';
 import './index.css';
 
@@ -45,7 +46,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="personal" element={<NetworkPersonal />} />
           <Route path="runs" element={<PlaceholderPage />} />
           <Route path="policy" element={<PlaceholderPage />} />
-          <Route path="ontology" element={<PlaceholderPage />} />
+          <Route path="ontology" element={<NetworkOntology />} />
           <Route path="*" element={<Navigate to="studio" replace />} />
         </Route>
         <Route path="/semantic" element={<SemanticLayout />}>
